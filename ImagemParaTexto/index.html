@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Extrair texto de imagem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div class="container">
+        <div class="left">
+            <input type="file" class="input-image">
+            <button class="btnAdcImagens">Inserir Imagem</button>
+            <textarea class="output-text" disabled></textarea>
+        </div>
+        <div class="right">
+            <img src="" alt="" class="preview">
+            <div class="barraProgresso"></div>
+        </div>
+    </div>
+  <!-- v5 -->
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="script.js"></script>
+</body>
+</html>
