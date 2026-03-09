@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
+  <link rel="icon" type="image/png" href="../tableblue.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AnonMail — Mesinhas</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -37,7 +38,7 @@
     .nav-crumb { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.35); }
 
     /* ── Main content ── */
-    .main { padding: 2.5rem 2rem; }
+    .main { padding: 2.5rem 2rem; max-width: 860px; margin: 0 auto; }
 
     body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
     h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.2rem; letter-spacing: -0.5px; }
@@ -201,6 +202,19 @@
     .cs { color: #ffb347; }
     .cc { color: rgba(255,255,255,0.28); }
 
+    footer { border-top: 1px solid var(--border); padding: 1.8rem 0; }
+    .footer-inner {
+      max-width: 860px; margin: 0 auto; padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;
+    }
+    .footer-brand { font-size: 0.74rem; font-weight: 700; color: rgba(255,255,255,0.2); }
+    .footer-note  { font-size: 0.7rem; color: rgba(255,255,255,0.15); }
+
+    .fi { opacity: 0; transform: translateY(18px); animation: fadeUp 0.65s ease forwards; }
+    .fi:nth-child(2) { animation-delay: 0.1s; }
+    .fi:nth-child(3) { animation-delay: 0.2s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
     @media (max-width: 520px) {
       .grid, .counters-row { grid-template-columns: 1fr; }
       .mode-cards { grid-template-columns: 1fr; }
@@ -280,7 +294,6 @@
   </div>
 
   <p class="feedback" id="feedback-envio"></p>
-  <footer style="margin-top:2rem">Mensagens ameaçadoras ou de assédio são crime (Lei 12.737 / Marco Civil da Internet).</footer>
 </div>
 
 <!-- ── TAB 2: Configuração ── -->
@@ -356,7 +369,6 @@
   </div>
 
   <p class="server-note" id="panel-note">Conectando ao Firebase...</p>
-  <footer>Painel interno — não compartilhe o acesso.</footer>
 </div>
 
 <script>
@@ -608,8 +620,8 @@
 <!-- ── TAB 4: TME ── -->
 <div class="tab-panel" id="tab-api">
   <div class="doc-hero doc-hero-tme">
-    <div class="doc-badge doc-badge-tme">Arquitetura</div>
-    <div class="doc-title">TME Architecture</div>
+    <div class="doc-badge doc-badge-tme">TME</div>
+    <div class="doc-title">AnonMail TME Architecture</div>
     <p class="doc-desc"><strong>Transparent Multi-Mode Execution</strong> — uma página HTML estática age como intermediária. Ela lê parâmetros da URL, executa o envio via o provedor configurado, e retorna o resultado no hash da URL para o WebViewer do Kodular. Sem backend próprio, sem servidor dedicado.</p>
   </div>
 
@@ -692,15 +704,21 @@
       </div>
     </div>
   </div>
-  <footer>TME Architecture — AnonMail · Mesinhas · C1 Studios</footer>
 </div>
 
 <!-- ── TAB 5: API ── -->
 <div class="tab-panel" id="tab-apidoc">
   <div class="doc-hero doc-hero-api">
-    <div class="doc-badge doc-badge-api">REST API</div>
-    <div class="doc-title">Email API</div>
+    <div class="doc-badge doc-badge-api">API</div>
+    <div class="doc-title">AnonMail API</div>
     <p class="doc-desc"><strong>POST</strong> para <code>https://mesinhasserver.vercel.app/api/email</code> — suporta os modos <code>anon</code>, <code>emailjs</code> e <code>formspree</code> via JSON. CORS habilitado para qualquer origem.</p>
+  </div>
+
+  <div class="doc-section-title">Modos disponíveis</div>
+  <div class="mode-cards">
+    <div class="mode-card"><div class="mode-card-tag green">anon</div><div class="mode-card-name">Anônimo</div><div class="mode-card-desc">EmailJS interno. Limite global de 180/mês. Sem credenciais.</div></div>
+    <div class="mode-card"><div class="mode-card-tag yellow">emailjs</div><div class="mode-card-name">EmailJS</div><div class="mode-card-desc">Suas próprias credenciais. Você controla o limite e o template.</div></div>
+    <div class="mode-card"><div class="mode-card-tag orange">formspree</div><div class="mode-card-name">Formspree</div><div class="mode-card-desc">Envia via Formspree. Chega no e-mail da sua conta.</div></div>
   </div>
 
   <div class="doc-section">
@@ -746,7 +764,6 @@
           <div class="step-body">
             <div class="step-title">Como funciona</div>
             <p class="step-desc">Um <code>fetch</code> com <code>method: 'POST'</code> e <code>Content-Type: application/json</code>. A API retorna JSON com <code>success: true/false</code>. CORS habilitado para qualquer origem.</p>
-            <div class="tip green">✓ Chamada HTTP direta — funciona de qualquer página ou domínio.</div>
           </div>
         </div>
         <div class="step-block">
@@ -831,7 +848,6 @@
           <div class="step-body">
             <div class="step-title">Como funciona</div>
             <p class="step-desc">Use o componente <strong>Web</strong> com <code>PostText</code> passando o body JSON. A resposta chega no evento <code>Web.GotText</code> como string JSON — verifique se contém <code>"success":true</code>.</p>
-            <div class="tip green">✓ Mais simples que o TME — só um componente Web, sem WebViewer.</div>
           </div>
         </div>
         <div class="step-block">
@@ -860,7 +876,6 @@
       </div>
     </div>
   </div>
-  <footer>REST API — AnonMail · Mesinhas · C1 Studios</footer>
 </div>
 
 </div>
@@ -886,5 +901,11 @@
     });
   }
 </script>
+<footer>
+  <div class="footer-inner">
+    <span class="footer-brand">Mesinhas · C1Studios</span>
+    <span class="footer-note">Ferramentas gratuitas.</span>
+  </div>
+</footer>
 </body>
 </html>

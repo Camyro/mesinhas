@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="icon" type="image/png" href="../tableblue.png">
+  <title>ImgConvert — Mesinhas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a2be0; --pill: #2d3ee8; --pill-focus: #3d50f0;
+      --text: #ffffff; --muted: rgba(255,255,255,0.38);
+      --green: #6affaa; --yellow: #ffdd57; --orange: #ffb347; --red: #ff7070;
+    }
+
+    body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+    /* ── Top nav ── */
+    .top-nav {
+      background: rgba(0,0,0,0.18);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 0 2rem; height: 46px;
+      display: flex; align-items: center; gap: 0.9rem;
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(8px);
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      color: rgba(255,255,255,0.55); text-decoration: none;
+      font-size: 0.76rem; font-weight: 600;
+      padding: 0.28rem 0.8rem; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .back-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+    .back-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+    .nav-crumb { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.35); }
+
+    /* ── Main ── */
+    .main { padding: 2.5rem 2rem; max-width: 860px; margin: 0 auto; }
+
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.2rem; letter-spacing: -0.5px; }
+    .subtitle { font-size: 0.88rem; color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.12); max-width: 700px; }
+    .tab-btn { background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 0.6rem 0.85rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: white; }
+    .tab-panel { display: none; max-width: 700px; }
+    .tab-panel.active { display: block; }
+
+    /* ── Form elements ── */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .full { grid-column: 1 / -1; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.78rem; color: var(--muted); font-weight: 500; padding-left: 0.8rem; }
+    .req { color: var(--yellow); font-weight: 700; margin-left: 2px; }
+
+    select {
+      background: var(--pill); border: 1.5px solid transparent; border-radius: 999px;
+      color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      padding: 0.75rem 1.2rem; outline: none; width: 100%;
+      transition: background 0.2s, border-color 0.2s; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.35)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1.2rem center;
+      padding-right: 2.5rem;
+    }
+    select:focus { background-color: var(--pill-focus); border-color: rgba(255,255,255,0.3); }
+    select:disabled { opacity: 0.4; cursor: not-allowed; }
+    select option { background: #2d3ee8; }
+
+    .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin: 2rem 0 1rem; }
+
+    /* ── Drop zone ── */
+    .dropzone {
+      background: var(--pill); border: 1.5px dashed rgba(255,255,255,0.18);
+      border-radius: 1.4rem; padding: 2.5rem 1.5rem;
+      text-align: center; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      background: var(--pill-focus); border-color: rgba(255,255,255,0.45);
+    }
+    .dropzone.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+    .dropzone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%; z-index: 2;
+    }
+    .dropzone input[type=file].hidden { display: none; }
+    .dz-icon { font-size: 2.2rem; margin-bottom: 0.6rem; line-height: 1; }
+    .dz-main { font-size: 0.88rem; font-weight: 600; color: white; margin-bottom: 0.3rem; }
+    .dz-sub { font-size: 0.74rem; color: var(--muted); }
+
+    /* ── Quality slider ── */
+    .quality-wrap {
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.3rem; padding: 1.2rem 1.4rem; margin-top: 1rem;
+    }
+    .quality-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+    .quality-label { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+    .quality-val { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; color: var(--green); }
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 6px;
+      background: rgba(255,255,255,0.12); border-radius: 3px; outline: none; border: none;
+      padding: 0;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--green); cursor: pointer;
+      box-shadow: 0 0 10px rgba(106,255,170,0.4);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 20px; height: 20px; border-radius: 50%; border: none;
+      background: var(--green); cursor: pointer;
+    }
+    .quality-hints { display: flex; justify-content: space-between; margin-top: 0.5rem; }
+    .quality-hints span { font-size: 0.63rem; color: rgba(255,255,255,0.2); font-weight: 600; letter-spacing: 1px; }
+
+    /* ── Buttons ── */
+    .btn {
+      background: white; color: var(--bg); border: none; border-radius: 999px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 700;
+      padding: 0.8rem 2.5rem; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.9; transform: scale(1.02); }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    .btn-row { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; align-items: center; }
+    .btn-outline {
+      background: transparent; color: white;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 700;
+      padding: 0.8rem 2.5rem; border-radius: 999px; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    }
+    .btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.08); border-color: white; }
+    .btn-outline:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── File list ── */
+    .file-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+    .file-chip {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 999px; padding: 0.4rem 1rem 0.4rem 0.6rem;
+      font-size: 0.75rem;
+    }
+    .file-chip-icon { font-size: 1rem; flex-shrink: 0; }
+    .file-chip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255,255,255,0.75); }
+    .file-chip-size { color: var(--muted); flex-shrink: 0; font-size: 0.68rem; }
+
+    /* ── Progress ── */
+    .progress-wrap { margin-top: 1.2rem; display: none; }
+    .progress-wrap.show { display: block; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .progress-track { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 3px; transition: width 0.3s; box-shadow: 0 0 8px rgba(106,255,170,0.4); }
+
+    /* ── Result ── */
+    .result-box {
+      display: none; margin-top: 1.5rem;
+      background: rgba(106,255,170,0.06); border: 1px solid rgba(106,255,170,0.2);
+      border-radius: 1.3rem; padding: 1.4rem 1.6rem;
+    }
+    .result-box.show { display: block; animation: fadeUp 0.4s ease; }
+    .result-box.err { background: rgba(255,100,100,0.05); border-color: rgba(255,100,100,0.18); }
+    .result-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .result-title.ok { color: var(--green); }
+    .result-title.err { color: var(--red); }
+    .result-sub { font-size: 0.76rem; color: var(--muted); margin-bottom: 1rem; }
+    .result-dl {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--green); color: #0a1a00; border-radius: 999px;
+      font-size: 0.82rem; font-weight: 700; padding: 0.6rem 1.4rem;
+      text-decoration: none; transition: opacity 0.2s, transform 0.15s;
+    }
+    .result-dl:hover { opacity: 0.88; transform: scale(1.02); }
+
+    /* ── Feedback ── */
+    .feedback { margin-top: 1rem; font-size: 0.82rem; padding-left: 0.5rem; min-height: 1.2rem; }
+    .feedback.err  { color: #ffaaaa; }
+    .feedback.ok   { color: #aaffcc; }
+    .feedback.warn { color: var(--yellow); }
+
+    /* ── Format info panel ── */
+    .format-info-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+    .fchip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.7rem; color: var(--muted);
+    }
+    .fchip.active { background: rgba(106,255,170,0.1); border-color: rgba(106,255,170,0.3); color: var(--green); }
+    .fchip-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* ── Info tab cards ── */
+    .info-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 1.5rem; }
+    .info-card {
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.3rem; padding: 1.2rem 1.1rem;
+    }
+    .info-card-tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'Courier New', monospace; }
+    .info-card-tag.green  { color: var(--green); }
+    .info-card-tag.yellow { color: var(--yellow); }
+    .info-card-tag.orange { color: var(--orange); }
+    .info-card-tag.blue   { color: #7ec8e3; }
+    .info-card-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .info-card-desc { font-size: 0.71rem; color: var(--muted); line-height: 1.6; }
+
+    .doc-section-title {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.25); margin-bottom: 1.1rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .doc-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(255,255,255,0.08), transparent); }
+
+    .doc-table-wrap { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 1.1rem; overflow: hidden; margin: 0.5rem 0 1.5rem; }
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .doc-table th { text-align: left; color: rgba(255,255,255,0.28); font-size: 0.58rem; letter-spacing: 3px; text-transform: uppercase; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .doc-table td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .doc-table td:first-child { font-family: 'Courier New', monospace; color: var(--yellow); font-size: 0.75rem; white-space: nowrap; }
+    .doc-table td:nth-child(2) { color: rgba(255,255,255,0.35); font-size: 0.71rem; }
+    .doc-table td:last-child { color: var(--muted); font-size: 0.75rem; }
+
+    .tip { border-radius: 0.75rem; padding: 0.65rem 1rem; font-size: 0.74rem; line-height: 1.7; margin-top: 0.7rem; }
+    .tip.green { background: rgba(106,255,170,0.04); border: 1px solid rgba(106,255,170,0.13); color: rgba(255,255,255,0.45); }
+    .tip.green code { color: var(--green); background: rgba(106,255,170,0.12); border-radius: 4px; padding: 0.1rem 0.35rem; font-family: 'Courier New', monospace; }
+    .tip.yellow { background: rgba(255,221,87,0.05); border: 1px solid rgba(255,221,87,0.13); color: rgba(255,255,255,0.45); }
+    .tip.yellow code { color: var(--yellow); background: rgba(255,221,87,0.12); border-radius: 4px; padding: 0.1rem 0.35rem; font-family: 'Courier New', monospace; }
+
+    .legend { font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 0.8rem; padding-left: 0.5rem; }
+
+    /* ── Animations ── */
+    .fi { opacity: 0; transform: translateY(18px); animation: fadeUp 0.65s ease forwards; }
+    .fi:nth-child(2) { animation-delay: 0.1s; }
+    .fi:nth-child(3) { animation-delay: 0.2s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid rgba(255,255,255,0.08); padding: 1.8rem 0; margin-top: 3rem; }
+    .footer-inner { max-width: 860px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; }
+    .footer-brand { font-size: 0.74rem; font-weight: 700; color: rgba(255,255,255,0.2); }
+    .footer-note  { font-size: 0.7rem; color: rgba(255,255,255,0.15); }
+
+    @media (max-width: 520px) {
+      .grid, .info-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Back nav ── -->
+<nav class="top-nav">
+  <a class="back-btn" href="../">
+    <svg viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7.5 1L2.5 5.5L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Início
+  </a>
+</nav>
+
+<!-- ── Main content ── -->
+<div class="main">
+
+  <h1 class="fi">ImgConvert</h1>
+  <p class="subtitle fi">Converta imagens diretamente no navegador, sem enviar arquivos para servidores.<br>Processamento 100% local, seguro e transparente. Suporte a múltiplos formatos.</p>
+
+  <div class="tab-bar fi">
+    <button class="tab-btn active" onclick="switchTab('converter', this)">Converter</button>
+    <button class="tab-btn" onclick="switchTab('formatos', this)">Formatos</button>
+  </div>
+
+  <!-- ── TAB 1: Converter ── -->
+  <div class="tab-panel active" id="tab-converter">
+
+    <div class="section-label">Configuração</div>
+    <div class="grid">
+      <div class="field">
+        <label>Formato de entrada <span class="req">*</span></label>
+        <select id="inputType">
+          <option value="" disabled selected>Selecione…</option>
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPG / JPEG</option>
+          <option value="image/webp">WEBP</option>
+          <option value="image/bmp">BMP</option>
+          <option value="image/gif">GIF</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Formato de saída <span class="req">*</span></label>
+        <select id="outputType">
+          <option value="" disabled selected>Selecione…</option>
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPG / JPEG</option>
+          <option value="image/webp">WEBP</option>
+          <option value="image/bmp">BMP</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="format-info-chips" id="formatChips"></div>
+
+    <!-- Quality slider (hidden until needed) -->
+    <div class="quality-wrap" id="qualityWrap" style="display:none">
+      <div class="quality-row">
+        <span class="quality-label">Qualidade da compressão</span>
+        <span class="quality-val" id="qualityVal">80%</span>
+      </div>
+      <input type="range" id="qualitySlider" min="1" max="100" value="80"/>
+      <div class="quality-hints">
+        <span>MÍNIMA</span>
+        <span>MÁXIMA</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.8rem">Imagens</div>
+    <div class="dropzone disabled" id="dropzone">
+      <input type="file" id="fileInput" multiple accept="image/*" class="hidden"/>
+      <div class="dz-icon">🖼</div>
+      <div class="dz-main">Clique para selecionar ou arraste aqui</div>
+      <div class="dz-sub" id="dzSub">Selecione os formatos acima primeiro</div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <p class="legend"><span class="req">*</span> campos obrigatórios</p>
+
+    <div class="btn-row">
+      <button class="btn" id="convertBtn" disabled onclick="convert()">Converter</button>
+      <button class="btn-outline" id="clearBtn" onclick="clearAll()" style="display:none">Limpar</button>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressLabel">Processando…</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="result-box" id="resultBox"></div>
+
+    <p class="feedback" id="feedback"></p>
+  </div>
+
+  <!-- ── TAB 2: Formatos ── -->
+  <div class="tab-panel" id="tab-formatos">
+
+    <div class="doc-section-title">Formatos de entrada suportados</div>
+    <div class="info-cards">
+      <div class="info-card">
+        <div class="info-card-tag green">PNG</div>
+        <div class="info-card-name">Portable Network Graphics</div>
+        <div class="info-card-desc">Suporte a transparência (canal alfa). Compressão sem perdas. Ideal para logos, ícones e gráficos com bordas nítidas.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-tag yellow">JPG / JPEG</div>
+        <div class="info-card-name">Joint Photographic Experts</div>
+        <div class="info-card-desc">Compressão com perdas. Tamanhos pequenos. O formato mais comum para fotografias e imagens com gradientes suaves.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-tag blue">WEBP</div>
+        <div class="info-card-name">Web Picture Format</div>
+        <div class="info-card-desc">Formato moderno do Google. Suporta transparência e animações. Compressão superior ao JPEG e PNG em tamanho similar.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-tag orange">BMP</div>
+        <div class="info-card-name">Bitmap</div>
+        <div class="info-card-desc">Sem compressão. Arquivos grandes mas com máxima fidelidade. Compatível com softwares legados e sistemas Windows.</div>
+      </div>
+    </div>
+
+    <div class="doc-section-title">Formatos de saída disponíveis</div>
+    <div class="doc-table-wrap">
+      <table class="doc-table">
+        <thead><tr><th>Formato</th><th>Transparência</th><th>Controle de qualidade</th><th>Indicação</th></tr></thead>
+        <tbody>
+          <tr><td>PNG</td><td style="color:var(--green)">✓ Sim</td><td style="color:var(--muted)">— N/A</td><td>Logos, ícones, capturas de tela</td></tr>
+          <tr><td>JPG</td><td style="color:#ff7070">✗ Não</td><td style="color:var(--green)">✓ Ajustável</td><td>Fotos, imagens naturais</td></tr>
+          <tr><td>WEBP</td><td style="color:var(--green)">✓ Sim</td><td style="color:var(--green)">✓ Ajustável</td><td>Web, apps, PWAs</td></tr>
+          <tr><td>BMP</td><td style="color:var(--muted)">— Parcial</td><td style="color:var(--muted)">— N/A</td><td>Compatibilidade legada</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip green">✓ <strong>100% local:</strong> nenhum arquivo é enviado a servidores. Todo o processamento acontece no seu navegador via <code>Canvas API</code>. Seus arquivos nunca saem do seu dispositivo.</div>
+    <div class="tip yellow" style="margin-top:0.6rem">⚠ <strong>GIF animado:</strong> apenas o primeiro frame é convertido. Para GIFs animados, é necessário um processamento frame-a-frame não suportado nesta versão.</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-brand">Mesinhas · C1Studios</span>
+    <span class="footer-note">Ferramentas gratuitas.</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  const inputType    = document.getElementById('inputType');
+  const outputType   = document.getElementById('outputType');
+  const fileInput    = document.getElementById('fileInput');
+  const dropzone     = document.getElementById('dropzone');
+  const convertBtn   = document.getElementById('convertBtn');
+  const clearBtn     = document.getElementById('clearBtn');
+  const fileList     = document.getElementById('fileList');
+  const qualityWrap  = document.getElementById('qualityWrap');
+  const qualitySlider= document.getElementById('qualitySlider');
+  const qualityVal   = document.getElementById('qualityVal');
+  const formatChips  = document.getElementById('formatChips');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel= document.getElementById('progressLabel');
+  const progressPct  = document.getElementById('progressPct');
+  const resultBox    = document.getElementById('resultBox');
+  const feedback     = document.getElementById('feedback');
+  const dzSub        = document.getElementById('dzSub');
+
+  const FORMAT_META = {
+    'image/png':  { label: 'PNG',  tag: 'green',  desc: 'Sem perdas · Transparência', ext: '.png' },
+    'image/jpeg': { label: 'JPG',  tag: 'yellow', desc: 'Compressão com perdas',      ext: '.jpg' },
+    'image/webp': { label: 'WEBP', tag: 'blue',   desc: 'Moderno · Web-optimized',    ext: '.webp' },
+    'image/bmp':  { label: 'BMP',  tag: 'orange', desc: 'Sem compressão',             ext: '.bmp'  },
+    'image/gif':  { label: 'GIF',  tag: 'orange', desc: 'Apenas 1º frame',            ext: '.gif'  },
+  };
+
+  function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1048576).toFixed(1) + ' MB';
+  }
+
+  function getExt(mime) { return (FORMAT_META[mime] || {}).ext || ''; }
+
+  function updateChips() {
+    formatChips.innerHTML = '';
+    const iMeta = inputType.value  ? FORMAT_META[inputType.value]  : null;
+    const oMeta = outputType.value ? FORMAT_META[outputType.value] : null;
+
+    if (!iMeta && !oMeta) return;
+
+    if (iMeta) {
+      const c = document.createElement('div');
+      c.className = 'fchip active';
+      c.innerHTML = `<span class="fchip-dot"></span>${iMeta.label} entrada`;
+      formatChips.appendChild(c);
+    }
+    if (oMeta) {
+      const arr = document.createElement('div');
+      arr.className = 'fchip';
+      arr.textContent = '→';
+      formatChips.appendChild(arr);
+      const c = document.createElement('div');
+      c.className = 'fchip active';
+      c.innerHTML = `<span class="fchip-dot"></span>${oMeta.label} saída`;
+      formatChips.appendChild(c);
+    }
+  }
+
+  function checkReady() {
+    const ready = inputType.value && outputType.value;
+    updateChips();
+
+    if (ready) {
+      dropzone.classList.remove('disabled');
+      fileInput.classList.remove('hidden');
+      dzSub.textContent = 'Formatos aceitos: ' + (FORMAT_META[inputType.value]?.label || '') + ' — múltiplos arquivos';
+    } else {
+      dropzone.classList.add('disabled');
+      fileInput.classList.add('hidden');
+      dzSub.textContent = 'Selecione os formatos acima primeiro';
+    }
+
+    const needsQuality = outputType.value === 'image/jpeg' || outputType.value === 'image/webp';
+    qualityWrap.style.display = needsQuality ? 'block' : 'none';
+  }
+
+  function renderFiles(files) {
+    fileList.innerHTML = '';
+    if (!files || !files.length) return;
+
+    const icons = { 'image/png': '🟢', 'image/jpeg': '🟡', 'image/webp': '🔵', 'image/bmp': '🟠', 'image/gif': '🟣' };
+    Array.from(files).forEach(f => {
+      const chip = document.createElement('div');
+      chip.className = 'file-chip';
+      chip.innerHTML = `
+        <span class="file-chip-icon">${icons[f.type] || '📄'}</span>
+        <span class="file-chip-name">${f.name}</span>
+        <span class="file-chip-size">${formatBytes(f.size)}</span>
+      `;
+      fileList.appendChild(chip);
+    });
+  }
+
+  inputType.addEventListener('change', () => { fileInput.accept = inputType.value; checkReady(); });
+  outputType.addEventListener('change', checkReady);
+
+  qualitySlider.addEventListener('input', () => {
+    qualityVal.textContent = qualitySlider.value + '%';
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const files = e.target.files;
+    if (files.length) {
+      renderFiles(files);
+      convertBtn.disabled = false;
+      clearBtn.style.display = 'inline-block';
+    }
+  });
+
+  // Drag and drop
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); if (!dropzone.classList.contains('disabled')) dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('drag-over');
+    if (!dropzone.classList.contains('disabled')) {
+      // Create a DataTransfer to set files
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length) {
+        renderFiles(files);
+        convertBtn.disabled = false;
+        clearBtn.style.display = 'inline-block';
+        // Store dropped files
+        dropzone._droppedFiles = files;
+      }
+    }
+  });
+
+  function clearAll() {
+    fileInput.value = '';
+    fileList.innerHTML = '';
+    dropzone._droppedFiles = null;
+    convertBtn.disabled = true;
+    clearBtn.style.display = 'none';
+    resultBox.className = 'result-box';
+    resultBox.innerHTML = '';
+    feedback.className = 'feedback';
+    feedback.textContent = '';
+    progressWrap.classList.remove('show');
+    progressFill.style.width = '0%';
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  async function convert() {
+    const files = dropzone._droppedFiles || fileInput.files;
+    if (!files || !files.length) {
+      feedback.className = 'feedback err';
+      feedback.textContent = 'Selecione pelo menos uma imagem.';
+      return;
+    }
+    if (!inputType.value || !outputType.value) {
+      feedback.className = 'feedback err';
+      feedback.textContent = 'Selecione os formatos de entrada e saída.';
+      return;
+    }
+
+    convertBtn.disabled = true;
+    clearBtn.style.display = 'none';
+    feedback.className = 'feedback';
+    feedback.textContent = '';
+    resultBox.className = 'result-box';
+    resultBox.innerHTML = '';
+    progressWrap.classList.add('show');
+    progressFill.style.width = '0%';
+
+    const output  = outputType.value;
+    const quality = qualitySlider.value / 100;
+    const zip     = new JSZip();
+    const total   = files.length;
+
+    try {
+      for (let i = 0; i < total; i++) {
+        const file = files[i];
+        const pct  = Math.round(((i + 1) / total) * 100);
+        progressLabel.textContent = `Convertendo ${i + 1} de ${total}…`;
+        progressPct.textContent   = pct + '%';
+
+        const img    = await createImageBitmap(file);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // White background for formats that don't support alpha
+        if (output === 'image/jpeg' || output === 'image/bmp') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.drawImage(img, 0, 0);
+
+        let blob;
+        if (output === 'image/jpeg' || output === 'image/webp') {
+          blob = await new Promise(res => canvas.toBlob(res, output, quality));
+        } else {
+          blob = await new Promise(res => canvas.toBlob(res, output));
+        }
+
+        const baseName = file.name.replace(/\.[^.]+$/, '') || 'imagem';
+        zip.file(baseName + getExt(output), blob);
+        progressFill.style.width = pct + '%';
+      }
+
+      progressLabel.textContent = 'Gerando arquivo…';
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url     = URL.createObjectURL(zipBlob);
+
+      resultBox.innerHTML = `
+        <div class="result-title ok">✓ Conversão concluída</div>
+        <div class="result-sub">${total} ${total === 1 ? 'imagem convertida' : 'imagens convertidas'} de ${FORMAT_META[inputType.value]?.label || ''} para ${FORMAT_META[output]?.label || ''}</div>
+        <a class="result-dl" href="${url}" download="imgconvert_${FORMAT_META[output]?.label?.toLowerCase() || 'output'}.zip">⬇ Baixar ZIP</a>
+      `;
+      resultBox.className = 'result-box show';
+
+    } catch (err) {
+      resultBox.innerHTML = `<div class="result-title err">✗ Erro na conversão</div><div class="result-sub">${err.message}</div>`;
+      resultBox.className = 'result-box show err';
+    } finally {
+      convertBtn.disabled = false;
+      clearBtn.style.display = 'inline-block';
+      progressWrap.classList.remove('show');
+    }
+  }
+</script>
+</body>
+</html>
