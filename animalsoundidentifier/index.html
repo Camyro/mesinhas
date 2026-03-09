@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Detector de Aves - BirdNET</title>
+</head>
+<body>
+
+<h1>Detector de Sons de Aves 🐦</h1>
+
+<input type="file" id="audioFile" accept="audio/*">
+<button onclick="enviar()">Analisar</button>
+
+<h2>Resultado:</h2>
+<pre id="resultado"></pre>
+
+<script>
+async function enviar() {
+    const fileInput = document.getElementById("audioFile");
+    const file = fileInput.files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("http://127.0.0.1:8000/analyze", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+    document.getElementById("resultado").textContent = JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>

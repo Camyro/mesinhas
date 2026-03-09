@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <title>AnonMail — TME Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+<p>TME Architecture</p>
+<p id="status">Processando...</p>
+
+<script>
+  const ANON_LIMIT = 180;
+
+  // ── Firebase ──
+  let db = null;
+  function initFirebase() {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey:            "AIzaSyC6mBZ-h8g3wQxjLuLRLSEKFaUfuaftm8k",
+          authDomain:        "c1studios-mesinhas.firebaseapp.com",
+          projectId:         "c1studios-mesinhas",
+          storageBucket:     "c1studios-mesinhas.firebasestorage.app",
+          messagingSenderId: "904298338390",
+          appId:             "1:904298338390:web:9994ce8a818e3d943683f7"
+        });
+      }
+      db = firebase.firestore();
+    } catch(e) {
+      console.warn('Firebase init error:', e);
+    }
+  }
+
+  // ── Helpers ──
+  function monthKey() {
+    const d = new Date();
+    return String(d.getMonth() + 1).padStart(2,'0') + d.getFullYear();
+  }
+
+  // Envia resultado via hash (Kodular / same-origin) E via postMessage (cross-origin)
+  function setResult(success, info = '') {
+    // 1. Hash — funciona para Kodular WebViewer e same-origin
+    const hashStr = success
+      ? `result=success&mode=${encodeURIComponent(info)}`
+      : `result=error&msg=${encodeURIComponent(info)}`;
+    window.location.hash = hashStr;
+
+    // 2. postMessage — funciona para iframes cross-origin
+    if (window.parent !== window) {
+      const msg = success
+        ? { tme: true, success: true,  mode: info }
+        : { tme: true, success: false, error: info };
+      window.parent.postMessage(msg, '*');
+    }
+
+    // UI feedback
+    const label = success ? `✓ Enviado (${info})` : `✗ Erro: ${info}`;
+    document.getElementById('status').textContent = label;
+    console.log('[AnonMail API]', label);
+  }
+
+  async function getAnonCount() {
+    if (!db) return 0;
+    try {
+      const snap = await db.collection('email').doc('anon_mes').get();
+      return snap.exists ? (snap.data()[monthKey()] || 0) : 0;
+    } catch(e) { return 0; }
+  }
+
+  async function incrementCounter(anonymous) {
+    if (!db) return;
+    const mk  = monthKey();
+    const inc = firebase.firestore.FieldValue.increment(1);
+    try {
+      await db.collection('email').doc(anonymous ? 'anon_geral'  : 'normal_geral').set({ total: inc }, { merge: true });
+      await db.collection('email').doc(anonymous ? 'anon_mes'    : 'normal_mes'  ).set({ [mk]: inc }, { merge: true });
+    } catch(e) { console.warn('Firestore write error:', e); }
+  }
+
+  // ── Provedores ──
+  async function sendAnon(params) {
+    const count = await getAnonCount();
+    if (count >= ANON_LIMIT) {
+      return setResult(false, `Limite mensal de ${ANON_LIMIT} e-mails anônimos atingido`);
+    }
+    try {
+      emailjs.init("fftaponrhcrWIn5Tv");
+      await emailjs.send("mesinhastools_autoemail", "template_hnobsrz", {
+        to_email:   params.to,
+        from_name:  'Anônimo',
+        from_email: 'nao-responder@anonmail.io',
+        subject:    params.subject,
+        message:    params.message
+      });
+      await incrementCounter(true);
+      setResult(true, 'anon');
+    } catch(e) {
+      setResult(false, e?.text || e?.message || 'Erro no EmailJS anônimo');
+    }
+  }
+
+  async function sendEmailJS(params) {
+    if (!params.ejs_key || !params.ejs_service || !params.ejs_template) {
+      return setResult(false, 'Parâmetros ejs_key, ejs_service e ejs_template são obrigatórios');
+    }
+    try {
+      emailjs.init(params.ejs_key);
+      await emailjs.send(params.ejs_service, params.ejs_template, {
+        to_email:   params.to,
+        from_name:  params.from_name  || 'Remetente',
+        from_email: params.from_email || '',
+        subject:    params.subject,
+        message:    params.message
+      });
+      await incrementCounter(false);
+      setResult(true, 'emailjs');
+    } catch(e) {
+      setResult(false, e?.text || e?.message || 'Erro no EmailJS');
+    }
+  }
+
+  async function sendFormspree(params) {
+    if (!params.fs_id) {
+      return setResult(false, 'Parâmetro fs_id é obrigatório para mode=formspree');
+    }
+    try {
+      const res = await fetch(`https://formspree.io/f/${params.fs_id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          email:    params.from_email || 'nao-responder@anonmail.io',
+          name:     params.from_name  || 'Remetente',
+          _subject: params.subject,
+          message:  params.message,
+          to_email: params.to
+        })
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        return setResult(false, d?.error || `HTTP ${res.status}`);
+      }
+      await incrementCounter(false);
+      setResult(true, 'formspree');
+    } catch(e) {
+      setResult(false, e?.message || 'Erro no Formspree');
+    }
+  }
+
+  // ── Main ──
+  async function main() {
+    initFirebase();
+
+    const p = new URLSearchParams(window.location.search);
+    const params = {
+      mode:         p.get('mode')         || '',
+      to:           p.get('to')           || '',
+      subject:      p.get('subject')      || '',
+      message:      p.get('message')      || '',
+      from_name:    p.get('from_name')    || '',
+      from_email:   p.get('from_email')   || '',
+      ejs_key:      p.get('ejs_key')      || '',
+      ejs_service:  p.get('ejs_service')  || '',
+      ejs_template: p.get('ejs_template') || '',
+      fs_id:        p.get('fs_id')        || '',
+    };
+
+    console.log('[AnonMail API] Parâmetros:', params);
+
+    if (!params.mode)    return setResult(false, 'Parâmetro mode é obrigatório');
+    if (!params.to)      return setResult(false, 'Parâmetro to é obrigatório');
+    if (!params.subject) return setResult(false, 'Parâmetro subject é obrigatório');
+    if (!params.message) return setResult(false, 'Parâmetro message é obrigatório');
+
+    switch (params.mode) {
+      case 'anon':      await sendAnon(params);      break;
+      case 'emailjs':   await sendEmailJS(params);   break;
+      case 'formspree': await sendFormspree(params); break;
+      default: setResult(false, `Mode inválido: "${params.mode}". Use anon, emailjs ou formspree`);
+    }
+  }
+
+  main();
+</script>
+</body>
+</html>

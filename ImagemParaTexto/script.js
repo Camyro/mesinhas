@@ -35,5 +35,3 @@ inputImage.addEventListener('change' , function(){
     }
 
 ;})
-
-

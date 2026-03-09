@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AnonMail — Mesinhas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a2be0; --pill: #2d3ee8; --pill-focus: #3d50f0;
+      --text: #ffffff; --muted: rgba(255,255,255,0.38);
+    }
+
+    /* ── Back nav ── */
+    .top-nav {
+      background: rgba(0,0,0,0.18);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 0 2rem; height: 46px;
+      display: flex; align-items: center; gap: 0.9rem;
+      position: sticky; top: 0; z-index: 200;
+      backdrop-filter: blur(8px);
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      color: rgba(255,255,255,0.55); text-decoration: none;
+      font-size: 0.76rem; font-weight: 600;
+      padding: 0.28rem 0.8rem; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .back-btn:hover { color: white; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+    .back-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+    .nav-sep { width: 1px; height: 14px; background: rgba(255,255,255,0.15); }
+    .nav-crumb { font-size: 0.76rem; font-weight: 600; color: rgba(255,255,255,0.35); }
+
+    /* ── Main content ── */
+    .main { padding: 2.5rem 2rem; }
+
+    body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.2rem; letter-spacing: -0.5px; }
+    .subtitle { font-size: 0.88rem; color: var(--muted); margin-bottom: 2rem; }
+    .subtitle a { color: var(--text); }
+
+    /* Tabs */
+    .tab-bar { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.12); max-width: 700px; }
+    .tab-btn { background: none; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 600; padding: 0.6rem 0.85rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); border-bottom-color: white; }
+    .tab-panel { display: none; max-width: 700px; }
+    .tab-panel.active { display: block; }
+
+    /* Form */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .full { grid-column: 1 / -1; }
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    label { font-size: 0.78rem; color: var(--muted); font-weight: 500; padding-left: 0.8rem; }
+    .req { color: #ffdd57; font-weight: 700; margin-left: 2px; }
+    input, textarea, select { background: var(--pill); border: 1.5px solid transparent; border-radius: 999px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; padding: 0.75rem 1.2rem; outline: none; width: 100%; transition: background 0.2s, border-color 0.2s; }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    input:focus, textarea:focus, select:focus { background: var(--pill-focus); border-color: rgba(255,255,255,0.3); }
+    textarea { border-radius: 1.4rem; resize: none; min-height: 110px; line-height: 1.6; }
+    select { cursor: pointer; }
+    select option { background: #2d3ee8; }
+
+    .section-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin: 2rem 0 1rem; }
+
+    /* Buttons */
+    .btn { background: white; color: var(--bg); border: none; border-radius: 999px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 700; padding: 0.8rem 2.5rem; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+    .btn:hover { opacity: 0.9; transform: scale(1.02); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-row { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.5rem; align-items: center; }
+    .btn-anon { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,0.4); }
+    .btn-anon:hover:not(:disabled) { background: rgba(255,255,255,0.08); border-color: white; opacity: 1; }
+    .btn-anon:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    .provider-btns { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+    .btn-provider { background: rgba(255,255,255,0.08); color: white; border: 1.5px solid rgba(255,255,255,0.2); display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.4rem; font-size: 0.82rem; }
+    .btn-provider:hover:not(:disabled) { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.5); opacity: 1; }
+    .btn-provider:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+    .pbtn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .provider-badge { display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.68rem; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+    .provider-badge .dot-small { width: 5px; height: 5px; border-radius: 50%; background: #6affaa; box-shadow: 0 0 4px #6affaa; animation: pulse 2s infinite; }
+
+    .feedback { margin-top: 1rem; font-size: 0.82rem; padding-left: 0.5rem; min-height: 1.2rem; }
+    .feedback.err  { color: #ffaaaa; }
+    .feedback.ok   { color: #aaffcc; }
+    .feedback.warn { color: #ffdd57; }
+    .legend { font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 0.8rem; padding-left: 0.5rem; }
+
+    /* Panel */
+    .panel-section-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin: 2rem 0 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
+    .panel-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+    .counters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .counter-box { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 1.6rem; padding: 1.6rem; }
+    .counter-box.anon-box { border-color: rgba(255,220,80,0.2); }
+    .counter-title { font-size: 0.68rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 0.7rem; }
+    .counter-value { font-size: 3rem; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+    .counter-value.warning { color: #ffdd57; }
+    .counter-value.limit   { color: #ff7070; }
+    .counter-sub { font-size: 0.73rem; color: var(--muted); margin-top: 0.35rem; }
+    .counter-status { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 0.28rem 0.8rem; font-size: 0.66rem; color: var(--muted); margin-top: 0.9rem; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot.offline { background: #ff7070; }
+    .dot.online  { background: #6affaa; box-shadow: 0 0 5px #6affaa; animation: pulse 2s infinite; }
+
+    .provider-track-wrap { margin-top: 1.5rem; }
+    .provider-track-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.6rem; }
+    .provider-track { display: flex; border-radius: 999px; overflow: hidden; height: 8px; gap: 2px; background: rgba(255,255,255,0.05); }
+    .provider-legends { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; margin-top: 0.7rem; }
+    .pleg { display: flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; color: var(--muted); }
+    .pleg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+    .pleg-dot.emailjs { background: #6affaa; }
+    .pleg .used-count { color: white; font-weight: 700; margin-left: 2px; }
+    .pleg .pleg-limit { color: rgba(255,255,255,0.25); }
+    .pleg.active-provider { color: white; }
+    .limit-label { font-size: 0.65rem; color: var(--muted); margin-top: 0.4rem; text-align: right; }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .server-note { font-size: 0.74rem; color: rgba(255,255,255,0.25); margin-top: 1.2rem; line-height: 1.7; }
+    footer { margin-top: 3rem; font-size: 0.7rem; color: rgba(255,255,255,0.25); }
+
+    /* ── TME / API shared ── */
+    .doc-hero { position: relative; overflow: hidden; border-radius: 1.8rem; padding: 2rem 2.2rem; margin-bottom: 2.2rem; }
+    .doc-hero::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.11); pointer-events: none; }
+    .doc-hero-tme::after { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(106,255,170,0.12) 0%, transparent 70%); pointer-events: none; }
+    .doc-hero-api::after { content: ''; position: absolute; top: -40px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(126,200,227,0.13) 0%, transparent 70%); pointer-events: none; }
+    .doc-badge { display: inline-flex; align-items: center; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 0.22rem 0.85rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 0.85rem; }
+    .doc-badge-tme { background: rgba(106,255,170,0.1); border-color: rgba(106,255,170,0.25); color: #6affaa; }
+    .doc-badge-api { background: rgba(126,200,227,0.1); border-color: rgba(126,200,227,0.25); color: #7ec8e3; }
+    .doc-title { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.6px; margin-bottom: 0.65rem; line-height: 1.2; }
+    .doc-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.8; position: relative; }
+    .doc-desc code { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.11); border-radius: 5px; padding: 0.1rem 0.45rem; font-size: 0.77rem; color: rgba(255,255,255,0.85); font-family: 'Courier New', monospace; }
+
+    .doc-section { margin-top: 2.4rem; }
+    .doc-section-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: rgba(255,255,255,0.25); margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.8rem; }
+    .doc-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(255,255,255,0.08), transparent); }
+
+    .mode-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.8rem; margin-bottom: 0.3rem; }
+    .mode-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.08); border-radius: 1.3rem; padding: 1.2rem 1.1rem; transition: all 0.2s; cursor: default; }
+    .mode-card:hover { background: rgba(255,255,255,0.055); transform: translateY(-2px); }
+    .mode-card-tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 0.5rem; font-family: 'Courier New', monospace; }
+    .mode-card-tag.green  { color: #6affaa; }
+    .mode-card-tag.yellow { color: #ffdd57; }
+    .mode-card-tag.orange { color: #ffb347; }
+    .mode-card-name { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.4rem; color: white; }
+    .mode-card-desc { font-size: 0.71rem; color: var(--muted); line-height: 1.6; }
+
+    .doc-table-wrap { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 1.1rem; overflow: hidden; margin: 0.5rem 0; }
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .doc-table th { text-align: left; color: rgba(255,255,255,0.28); font-size: 0.58rem; letter-spacing: 3px; text-transform: uppercase; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .doc-table td { padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .doc-table td:first-child { font-family: 'Courier New', monospace; color: #ffdd57; font-size: 0.75rem; white-space: nowrap; }
+    .doc-table td:nth-child(2) { color: rgba(255,255,255,0.35); font-size: 0.71rem; }
+    .doc-table td:last-child { color: var(--muted); font-size: 0.75rem; }
+
+    .resp-chips { display: flex; flex-direction: column; gap: 0.5rem; margin: 0.5rem 0; }
+    .resp-chip { display: inline-flex; align-items: center; gap: 0.6rem; border-radius: 0.7rem; padding: 0.5rem 1.1rem 0.5rem 0.6rem; font-size: 0.72rem; width: fit-content; font-family: 'Courier New', monospace; }
+    .resp-chip .chip-code { font-weight: 800; font-size: 0.68rem; padding: 0.15rem 0.5rem; border-radius: 5px; min-width: 2rem; text-align: center; }
+    .resp-chip.ok  { background: rgba(106,255,170,0.06); border: 1px solid rgba(106,255,170,0.15); color: rgba(255,255,255,0.65); }
+    .resp-chip.ok  .chip-code { background: rgba(106,255,170,0.18); color: #6affaa; }
+    .resp-chip.err { background: rgba(255,100,100,0.05); border: 1px solid rgba(255,100,100,0.13); color: rgba(255,255,255,0.55); }
+    .resp-chip.err .chip-code { background: rgba(255,100,100,0.18); color: #ffaaaa; }
+
+    .itab-bar { display: flex; gap: 0.3rem; margin-bottom: 1.6rem; padding: 0.28rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.07); border-radius: 999px; width: fit-content; }
+    .itab-btn { background: none; border: none; border-radius: 999px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 600; padding: 0.38rem 1.15rem; cursor: pointer; transition: all 0.18s; }
+    .itab-btn.active { background: white; color: var(--bg); }
+    .itab-btn:hover:not(.active) { color: rgba(255,255,255,0.8); }
+    .itab-panel { display: none; }
+    .itab-panel.active { display: block; }
+
+    .step-list { display: flex; flex-direction: column; }
+    .step-block { display: flex; gap: 1.2rem; padding-bottom: 2rem; position: relative; }
+    .step-block:not(:last-child)::before { content: ''; position: absolute; left: 0.95rem; top: 2.2rem; bottom: 0.4rem; width: 1px; background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent); }
+    .step-num { flex-shrink: 0; width: 1.95rem; height: 1.95rem; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.45); }
+    .step-body { flex: 1; min-width: 0; padding-top: 0.2rem; }
+    .step-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: white; }
+    .step-desc { font-size: 0.79rem; color: var(--muted); line-height: 1.8; margin-bottom: 0.6rem; }
+    .step-desc:last-child { margin-bottom: 0; }
+    .step-desc code, .step-title code { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 0.1rem 0.38rem; font-size: 0.73rem; color: rgba(255,255,255,0.85); font-family: 'Courier New', monospace; }
+
+    .tip { border-radius: 0.75rem; padding: 0.65rem 1rem; font-size: 0.74rem; line-height: 1.7; margin-top: 0.7rem; }
+    .tip code { border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.71rem; font-family: 'Courier New', monospace; }
+    .tip.yellow { background: rgba(255,221,87,0.05); border: 1px solid rgba(255,221,87,0.13); color: rgba(255,255,255,0.45); }
+    .tip.yellow code { color: #ffdd57; background: rgba(255,221,87,0.12); }
+    .tip.green  { background: rgba(106,255,170,0.04); border: 1px solid rgba(106,255,170,0.13); color: rgba(255,255,255,0.45); }
+    .tip.green code { color: #6affaa; background: rgba(106,255,170,0.12); }
+
+    .code-block { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 1rem; padding: 2.6rem 1.3rem 1.1rem; font-family: 'Courier New', monospace; font-size: 0.74rem; line-height: 1.8; color: rgba(255,255,255,0.7); margin: 0.8rem 0; position: relative; overflow-x: auto; }
+    .code-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2.2rem; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.06); border-radius: 1rem 1rem 0 0; pointer-events: none; }
+    .code-block .copy-btn { position: absolute; top: 0.52rem; right: 0.75rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.13); border-radius: 999px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.62rem; font-weight: 600; padding: 0.2rem 0.65rem; cursor: pointer; transition: all 0.18s; z-index: 1; }
+    .code-block .copy-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+    .ck { color: #7ec8e3; }
+    .cv { color: #6affaa; }
+    .cs { color: #ffb347; }
+    .cc { color: rgba(255,255,255,0.28); }
+
+    @media (max-width: 520px) {
+      .grid, .counters-row { grid-template-columns: 1fr; }
+      .mode-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Back nav ── -->
+<nav class="top-nav">
+  <a class="back-btn" href="../">
+    <svg viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7.5 1L2.5 5.5L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Início
+  </a>
+</nav>
+
+<!-- ── Main content ── -->
+<div class="main">
+
+<h1>AnonMail</h1>
+<p class="subtitle">Envie e-mails sem revelar sua identidade ou integre o seu EmailJS ou Formspree.</p>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('envio', this)">Envio</button>
+  <button class="tab-btn" onclick="switchTab('config', this)">Configuração</button>
+  <button class="tab-btn" onclick="switchTab('painel', this)">Painel</button>
+  <button class="tab-btn" onclick="switchTab('api', this)">TME</button>
+  <button class="tab-btn" onclick="switchTab('apidoc', this)">API</button>
+</div>
+
+<!-- ── TAB 1: Envio ── -->
+<div class="tab-panel active" id="tab-envio">
+  <div class="section-label">Mensagem</div>
+  <div class="grid">
+    <div class="field">
+      <label>Para (destinatário) <span class="req">*</span></label>
+      <input type="email" id="to_email" placeholder="destinatario@exemplo.com"/>
+    </div>
+    <div class="field">
+      <label>Nome do remetente</label>
+      <input type="text" id="from_name" placeholder="Anônimo"/>
+    </div>
+    <div class="field full">
+      <label>E-mail do remetente</label>
+      <input type="email" id="from_email" placeholder="nao-responder@anonmail.io"/>
+    </div>
+    <div class="field full">
+      <label>Assunto <span class="req">*</span></label>
+      <input type="text" id="subject" placeholder="Mensagem anônima"/>
+    </div>
+    <div class="field full">
+      <label>Mensagem <span class="req">*</span></label>
+      <textarea id="message" placeholder="Escreva sua mensagem..."></textarea>
+    </div>
+  </div>
+  <p class="legend"><span class="req">*</span> campos obrigatórios</p>
+
+  <div class="section-label" style="margin-top:1.5rem">Enviar via provedor</div>
+  <div class="provider-btns">
+    <button class="btn btn-provider" id="btn-emailjs" onclick="sendNormal('emailjs')">
+      <span class="pbtn-dot" style="background:#6affaa"></span> EmailJS
+    </button>
+    <button class="btn btn-provider" id="btn-formspree" onclick="sendNormal('formspree')">
+      <span class="pbtn-dot" style="background:#ffb347"></span> Formspree
+    </button>
+  </div>
+
+  <div class="section-label" style="margin-top:1.5rem">Envio anônimo automático</div>
+  <div class="btn-row" style="margin-top:0">
+    <button class="btn btn-anon" id="send-anon-btn" onclick="sendEmail(true)">Envio Anônimo</button>
+    <span class="provider-badge" id="provider-badge">
+      <span class="dot-small"></span>
+      <span id="provider-badge-text">carregando...</span>
+    </span>
+  </div>
+
+  <p class="feedback" id="feedback-envio"></p>
+  <footer style="margin-top:2rem">Mensagens ameaçadoras ou de assédio são crime (Lei 12.737 / Marco Civil da Internet).</footer>
+</div>
+
+<!-- ── TAB 2: Configuração ── -->
+<div class="tab-panel" id="tab-config">
+  <div class="section-label">EmailJS — envio normal</div>
+  <div class="grid">
+    <div class="field full">
+      <label>Public Key <span class="req">*</span></label>
+      <input type="text" id="c_public_key" placeholder="user_xxxxxxxxxxxxxxxxxxx"/>
+    </div>
+    <div class="field">
+      <label>Service ID <span class="req">*</span></label>
+      <input type="text" id="c_service_id" placeholder="service_xxxxxxx"/>
+    </div>
+    <div class="field">
+      <label>Template ID <span class="req">*</span></label>
+      <input type="text" id="c_template_id" placeholder="template_xxxxxxx"/>
+    </div>
+  </div>
+
+  <div class="section-label">Formspree — envio normal</div>
+  <div class="grid">
+    <div class="field full">
+      <label>Form ID <span class="req">*</span></label>
+      <input type="text" id="c_formspree_id" placeholder="ex: abcdefgh (de formspree.io/f/abcdefgh)"/>
+    </div>
+  </div>
+
+  <p class="legend"><span class="req">*</span> campos obrigatórios</p>
+  <button class="btn" onclick="saveConfig()">Salvar configurações</button>
+  <p class="feedback" id="feedback-config"></p>
+</div>
+
+<!-- ── TAB 3: Painel ── -->
+<div class="tab-panel" id="tab-painel">
+  <div class="provider-track-wrap" style="margin-top:0.5rem">
+    <div class="provider-track-label">Rotação de provedores anônimos</div>
+    <div class="provider-track" id="provider-track"></div>
+    <div class="provider-legends" id="provider-legends"></div>
+    <div class="limit-label" id="limit-label-main">— / 180</div>
+  </div>
+
+  <div class="panel-section-title">Envios anônimos</div>
+  <div class="counters-row">
+    <div class="counter-box anon-box">
+      <div class="counter-title">Total anônimos</div>
+      <div class="counter-value" id="ct-anon-total">—</div>
+      <div class="counter-sub">acumulado geral</div>
+      <div class="counter-status"><div class="dot offline" id="dot-anon-total"></div><span id="lbl-anon-total">Carregando...</span></div>
+    </div>
+    <div class="counter-box anon-box">
+      <div class="counter-title">Anônimos este mês</div>
+      <div class="counter-value" id="ct-anon-month">—</div>
+      <div class="counter-sub" id="lbl-anon-month-name">—</div>
+      <div class="counter-status"><div class="dot offline" id="dot-anon-month"></div><span id="lbl-anon-month">Carregando...</span></div>
+    </div>
+  </div>
+
+  <div class="panel-section-title">Envios normais</div>
+  <div class="counters-row">
+    <div class="counter-box">
+      <div class="counter-title">Total normais</div>
+      <div class="counter-value" id="ct-norm-total">—</div>
+      <div class="counter-sub">acumulado geral</div>
+      <div class="counter-status"><div class="dot offline" id="dot-norm-total"></div><span id="lbl-norm-total">Carregando...</span></div>
+    </div>
+    <div class="counter-box">
+      <div class="counter-title">Normais este mês</div>
+      <div class="counter-value" id="ct-norm-month">—</div>
+      <div class="counter-sub" id="lbl-norm-month-name">—</div>
+      <div class="counter-status"><div class="dot offline" id="dot-norm-month"></div><span id="lbl-norm-month">Carregando...</span></div>
+    </div>
+  </div>
+
+  <p class="server-note" id="panel-note">Conectando ao Firebase...</p>
+  <footer>Painel interno — não compartilhe o acesso.</footer>
+</div>
+
+<script>
+  const ANON_LIMIT = 180;
+  const PROVIDERS = [
+    { key: 'emailjs', name: 'EmailJS', min: 0, max: 179, limit: 180, color: '#6affaa' },
+  ];
+
+  let ejsConfig = { publicKey: '', serviceId: '', templateId: '' };
+  let anonConfig = { formspreeId: '' };
+  let db = null;
+
+  function monthKey() {
+    const d = new Date();
+    return String(d.getMonth() + 1).padStart(2,'0') + d.getFullYear();
+  }
+  const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  function monthLabel() {
+    const d = new Date();
+    return MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function getProvider(count) {
+    return PROVIDERS.find(p => count >= p.min && count <= p.max) || null;
+  }
+
+  function initFirebase() {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey:            "AIzaSyC6mBZ-h8g3wQxjLuLRLSEKFaUfuaftm8k",
+          authDomain:        "c1studios-mesinhas.firebaseapp.com",
+          projectId:         "c1studios-mesinhas",
+          storageBucket:     "c1studios-mesinhas.firebasestorage.app",
+          messagingSenderId: "904298338390",
+          appId:             "1:904298338390:web:9994ce8a818e3d943683f7"
+        });
+      }
+      db = firebase.firestore();
+      loadCounters();
+    } catch(e) {
+      console.error(e);
+      setStatus('offline', 'Erro ao conectar');
+    }
+  }
+
+  async function loadCounters() {
+    if (!db) return;
+    try {
+      const mk = monthKey();
+      const ml = monthLabel();
+      const [aTotalDoc, aMesDoc, nTotalDoc, nMesDoc] = await Promise.all([
+        db.collection('email').doc('anon_geral').get(),
+        db.collection('email').doc('anon_mes').get(),
+        db.collection('email').doc('normal_geral').get(),
+        db.collection('email').doc('normal_mes').get(),
+      ]);
+      const anonTotal = aTotalDoc.exists ? (aTotalDoc.data().total || 0) : 0;
+      const anonMonth = aMesDoc.exists   ? (aMesDoc.data()[mk]    || 0) : 0;
+      const normTotal = nTotalDoc.exists ? (nTotalDoc.data().total || 0) : 0;
+      const normMonth = nMesDoc.exists   ? (nMesDoc.data()[mk]    || 0) : 0;
+
+      document.getElementById('ct-anon-total').textContent       = anonTotal;
+      document.getElementById('ct-anon-month').textContent       = anonMonth;
+      document.getElementById('lbl-anon-month-name').textContent = ml;
+      const pct = Math.min((anonMonth / ANON_LIMIT) * 100, 100);
+      document.getElementById('ct-anon-month').className =
+        'counter-value' + (pct >= 100 ? ' limit' : pct >= 75 ? ' warning' : '');
+
+      document.getElementById('ct-norm-total').textContent       = normTotal;
+      document.getElementById('ct-norm-month').textContent       = normMonth;
+      document.getElementById('lbl-norm-month-name').textContent = ml;
+
+      setStatus('online', 'Firebase conectado');
+      document.getElementById('panel-note').textContent =
+        'Dados sincronizados via Firebase Firestore. Todos os usuários compartilham os mesmos contadores.';
+
+      renderProviderTrack(anonMonth);
+      updateProviderBadge(anonMonth);
+      checkAnonLimit(anonMonth);
+    } catch(e) {
+      console.error(e);
+      setStatus('offline', 'Erro ao carregar dados');
+    }
+  }
+
+  function renderProviderTrack(anonMonth) {
+    const track   = document.getElementById('provider-track');
+    const legends = document.getElementById('provider-legends');
+    document.getElementById('limit-label-main').textContent = `${anonMonth} / ${ANON_LIMIT}`;
+    track.innerHTML   = '';
+    legends.innerHTML = '';
+    PROVIDERS.forEach(p => {
+      const widthPct = (p.limit / ANON_LIMIT) * 100;
+      const used     = Math.max(0, Math.min(anonMonth - p.min, p.limit));
+      const usedPct  = (used / p.limit) * 100;
+      const isActive = anonMonth >= p.min && anonMonth <= p.max;
+      const isDone   = anonMonth > p.max;
+      const wrap = document.createElement('div');
+      wrap.style.cssText = `flex: 0 0 calc(${widthPct}% - 2px); position:relative; height:8px; border-radius:2px; overflow:hidden; background:rgba(255,255,255,0.06);`;
+      const fill = document.createElement('div');
+      fill.style.cssText = `height:100%; width:${isDone ? 100 : usedPct}%; background:${p.color}; border-radius:2px; transition:width 0.5s; opacity:${isDone || isActive ? 1 : 0.3};`;
+      wrap.appendChild(fill);
+      if (isActive) wrap.style.boxShadow = `0 0 8px ${p.color}55`;
+      track.appendChild(wrap);
+      const leg = document.createElement('div');
+      leg.className = 'pleg' + (isActive ? ' active-provider' : '');
+      leg.innerHTML = `<div class="pleg-dot ${p.key}"></div>${p.name}<span class="used-count">${used}</span><span class="pleg-limit">/ ${p.limit}</span>${isActive ? '<span style="color:#6affaa;margin-left:2px">← ativo</span>' : ''}`;
+      legends.appendChild(leg);
+    });
+  }
+
+  function updateProviderBadge(anonMonth) {
+    const badge = document.getElementById('provider-badge-text');
+    if (anonMonth >= ANON_LIMIT) {
+      badge.textContent = 'limite atingido';
+      document.getElementById('provider-badge').style.borderColor = 'rgba(255,100,100,0.3)';
+    } else {
+      const p = getProvider(anonMonth);
+      badge.textContent = p ? `via ${p.name}` : '—';
+      document.getElementById('provider-badge').style.borderColor = '';
+    }
+  }
+
+  function checkAnonLimit(anonMonth) {
+    const btn = document.getElementById('send-anon-btn');
+    const fb  = document.getElementById('feedback-envio');
+    if (anonMonth >= ANON_LIMIT) {
+      btn.disabled = true;
+      if (!fb.textContent || fb.classList.contains('warn')) {
+        fb.className = 'feedback warn';
+        fb.textContent = `⚠ Limite de ${ANON_LIMIT} envios anônimos atingido para ${monthLabel()}. Disponível no próximo mês.`;
+      }
+    } else {
+      btn.disabled = false;
+    }
+  }
+
+  function setStatus(state, text) {
+    ['dot-anon-total','dot-anon-month','dot-norm-total','dot-norm-month'].forEach(id => {
+      document.getElementById(id).className = 'dot ' + state;
+    });
+    ['lbl-anon-total','lbl-anon-month','lbl-norm-total','lbl-norm-month'].forEach(id => {
+      document.getElementById(id).textContent = text;
+    });
+  }
+
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'painel') loadCounters();
+  }
+
+  function saveConfig() {
+    ejsConfig = {
+      publicKey:  document.getElementById('c_public_key').value.trim(),
+      serviceId:  document.getElementById('c_service_id').value.trim(),
+      templateId: document.getElementById('c_template_id').value.trim(),
+    };
+    anonConfig.formspreeId = document.getElementById('c_formspree_id').value.trim();
+    const fb = document.getElementById('feedback-config');
+    fb.className = 'feedback ok';
+    fb.textContent = 'Configurações salvas com sucesso!';
+  }
+
+  const API_URL = 'https://mesinhasserver.vercel.app/api/email';
+
+  async function callAPI(body) {
+    const res  = await fetch(API_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Erro desconhecido');
+    return data;
+  }
+
+  async function sendNormal(providerKey) {
+    const get = id => document.getElementById(id).value.trim();
+    const toEmail   = get('to_email');
+    const fromName  = get('from_name') || 'Remetente';
+    const fromEmail = get('from_email') || '';
+    const subject   = get('subject');
+    const message   = get('message');
+    const fb  = document.getElementById('feedback-envio');
+    const btn = document.getElementById('btn-' + providerKey);
+
+    fb.className = 'feedback'; fb.textContent = '';
+    if (!toEmail || !subject || !message) { fb.className = 'feedback err'; fb.textContent = 'Preencha todos os campos obrigatórios.'; return; }
+    if (providerKey === 'emailjs' && (!ejsConfig.publicKey || !ejsConfig.serviceId || !ejsConfig.templateId)) { fb.className = 'feedback err'; fb.textContent = 'Configure as credenciais do EmailJS na aba Configuração.'; return; }
+    if (providerKey === 'formspree' && !anonConfig.formspreeId) { fb.className = 'feedback err'; fb.textContent = 'Configure o Form ID do Formspree na aba Configuração.'; return; }
+
+    const colors = { emailjs: '#6affaa', formspree: '#ffb347' };
+    const labels = { emailjs: 'EmailJS', formspree: 'Formspree' };
+    ['emailjs','formspree'].forEach(k => { const b = document.getElementById('btn-' + k); if (b) b.disabled = true; });
+    btn.innerHTML = `<span class="pbtn-dot" style="background:${colors[providerKey]}"></span> Enviando...`;
+    fb.textContent = `Enviando via ${labels[providerKey]}...`;
+
+    try {
+      const apiBody = { mode: providerKey, to: toEmail, subject, message, from_name: fromName, from_email: fromEmail };
+      if (providerKey === 'emailjs') { apiBody.ejs_key = ejsConfig.publicKey; apiBody.ejs_service = ejsConfig.serviceId; apiBody.ejs_template = ejsConfig.templateId; }
+      else { apiBody.fs_id = anonConfig.formspreeId; }
+      await callAPI(apiBody);
+      fb.className = 'feedback ok';
+      fb.textContent = `Mensagem enviada com sucesso via ${labels[providerKey]}!`;
+      ['to_email','subject','message'].forEach(id => document.getElementById(id).value = '');
+      loadCounters();
+    } catch(e) {
+      fb.className = 'feedback err'; fb.textContent = 'Erro: ' + (e?.message || 'Tente novamente.');
+    } finally {
+      ['emailjs','formspree'].forEach(k => {
+        const b = document.getElementById('btn-' + k);
+        if (b) { b.disabled = false; b.innerHTML = `<span class="pbtn-dot" style="background:${colors[k]}"></span> ${labels[k]}`; }
+      });
+    }
+  }
+
+  async function sendEmail(anonymous = true) {
+    const get = id => document.getElementById(id).value.trim();
+    const toEmail = get('to_email'), subject = get('subject'), message = get('message');
+    const fb  = document.getElementById('feedback-envio');
+    const btn = document.getElementById('send-anon-btn');
+
+    fb.className = 'feedback'; fb.textContent = '';
+    if (!toEmail || !subject || !message) { fb.className = 'feedback err'; fb.textContent = 'Preencha todos os campos obrigatórios.'; return; }
+
+    btn.disabled = true; fb.textContent = 'Enviando anonimamente...';
+    try {
+      await callAPI({ mode: 'anon', to: toEmail, subject, message });
+      fb.className = 'feedback ok'; fb.textContent = 'Mensagem enviada anonimamente!';
+      ['to_email','subject','message'].forEach(id => document.getElementById(id).value = '');
+      loadCounters();
+    } catch(e) {
+      fb.className = 'feedback err'; fb.textContent = 'Erro: ' + (e?.message || 'Tente novamente.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('lbl-anon-month-name').textContent = monthLabel();
+  document.getElementById('lbl-norm-month-name').textContent = monthLabel();
+  renderProviderTrack(0);
+  initFirebase();
+</script>
+
+<!-- ── TAB 4: TME ── -->
+<div class="tab-panel" id="tab-api">
+  <div class="doc-hero doc-hero-tme">
+    <div class="doc-badge doc-badge-tme">Arquitetura</div>
+    <div class="doc-title">TME Architecture</div>
+    <p class="doc-desc"><strong>Transparent Multi-Mode Execution</strong> — uma página HTML estática age como intermediária. Ela lê parâmetros da URL, executa o envio via o provedor configurado, e retorna o resultado no hash da URL para o WebViewer do Kodular. Sem backend próprio, sem servidor dedicado.</p>
+  </div>
+
+  <div class="doc-section-title">Modos disponíveis</div>
+  <div class="mode-cards">
+    <div class="mode-card"><div class="mode-card-tag green">anon</div><div class="mode-card-name">Anônimo</div><div class="mode-card-desc">EmailJS interno. Limite global de 180/mês. Sem credenciais.</div></div>
+    <div class="mode-card"><div class="mode-card-tag yellow">emailjs</div><div class="mode-card-name">EmailJS</div><div class="mode-card-desc">Suas próprias credenciais. Você controla o limite e o template.</div></div>
+    <div class="mode-card"><div class="mode-card-tag orange">formspree</div><div class="mode-card-name">Formspree</div><div class="mode-card-desc">Envia via Formspree. Chega no e-mail da sua conta.</div></div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Parâmetros da URL</div>
+    <div class="doc-table-wrap"><table class="doc-table">
+      <thead><tr><th>Parâmetro</th><th>Modo</th><th>Req.</th><th>Descrição</th></tr></thead>
+      <tbody>
+        <tr><td>mode</td><td>todos</td><td style="color:#6affaa">✓</td><td>anon · emailjs · formspree</td></tr>
+        <tr><td>to</td><td>todos</td><td style="color:#6affaa">✓</td><td>E-mail do destinatário</td></tr>
+        <tr><td>subject</td><td>todos</td><td style="color:#6affaa">✓</td><td>Assunto da mensagem</td></tr>
+        <tr><td>message</td><td>todos</td><td style="color:#6affaa">✓</td><td>Corpo da mensagem</td></tr>
+        <tr><td>from_name</td><td>emailjs · formspree</td><td style="color:var(--muted)">—</td><td>Nome do remetente (opcional)</td></tr>
+        <tr><td>from_email</td><td>emailjs · formspree</td><td style="color:var(--muted)">—</td><td>E-mail do remetente (opcional)</td></tr>
+        <tr><td>ejs_key</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Public Key</td></tr>
+        <tr><td>ejs_service</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Service ID</td></tr>
+        <tr><td>ejs_template</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Template ID</td></tr>
+        <tr><td>fs_id</td><td>formspree</td><td style="color:#ffdd57">✓*</td><td>Form ID do Formspree</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Resposta via hash da URL</div>
+    <p class="step-desc" style="margin-bottom:0.8rem">A página grava o resultado em <code>window.location.hash</code>. No Kodular, leia via <code>WebViewerTME.CurrentUrl</code> no evento <code>PageLoaded</code>.</p>
+    <div class="resp-chips">
+      <div class="resp-chip ok"><span class="chip-code">✓</span> #result=success&amp;mode=anon</div>
+      <div class="resp-chip ok"><span class="chip-code">✓</span> #result=success&amp;mode=emailjs</div>
+      <div class="resp-chip err"><span class="chip-code">✗</span> #result=error&amp;msg=Motivo+do+erro</div>
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Guia de integração — Kodular</div>
+    <div class="step-list">
+      <div class="step-block">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Adicione um WebViewer invisível</div>
+          <p class="step-desc">No Designer, arraste um <strong>WebViewer</strong> para a tela. Defina <strong>Visible → false</strong>. Nomeie-o <code>WebViewerTME</code>.</p>
+          <div class="tip yellow">💡 Se já usa um WebViewer para outra coisa, crie um segundo componente dedicado só ao TME.</div>
+        </div>
+      </div>
+      <div class="step-block">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Crie uma variável global de controle</div>
+          <p class="step-desc">Crie uma variável global booleana <code>tme_aguardando</code> com valor inicial <strong>false</strong>. Ela evita reagir a carregamentos não relacionados no evento PageLoaded.</p>
+        </div>
+      </div>
+      <div class="step-block">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Monte a URL e abra no WebViewer</div>
+          <p class="step-desc">Use <code>Web → UriEncode</code> em cada valor antes de concatenar. Marque <code>tme_aguardando = true</code> antes de chamar <code>GoToUrl</code>. A base é <code>mesinhas.vercel.app/email/tme/</code>.</p>
+          <div class="tip yellow">⚠ Use <code>Web.UriEncode</code> em <strong>cada campo individualmente</strong> — nunca concatene texto puro com <code>&amp;</code>, <code>=</code>, espaços ou acentos.</div>
+        </div>
+      </div>
+      <div class="step-block">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Leia o resultado no evento PageLoaded</div>
+          <p class="step-desc">Em <code>WebViewerTME.PageLoaded</code>, verifique <code>tme_aguardando</code>. Leia <code>WebViewerTME.CurrentUrl</code> e separe o hash com <code>#</code> (posição 2). Se contiver <code>result=success</code> mostre sucesso; caso contrário extraia o erro com <code>segment(hash, "msg=", 2)</code> e decodifique com <code>Web.UriDecode</code>. Marque <code>tme_aguardando = false</code>.</p>
+          <div class="tip yellow">💡 <code>segment(texto, separador, 2)</code> é o bloco <strong>Text → segment</strong> do Kodular.</div>
+        </div>
+      </div>
+      <div class="step-block">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Desabilite o botão durante o envio</div>
+          <p class="step-desc">Desabilite o botão antes de chamar <code>GoToUrl</code> e reabilite dentro do <code>PageLoaded</code>, após tratar o resultado.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>TME Architecture — AnonMail · Mesinhas · C1 Studios</footer>
+</div>
+
+<!-- ── TAB 5: API ── -->
+<div class="tab-panel" id="tab-apidoc">
+  <div class="doc-hero doc-hero-api">
+    <div class="doc-badge doc-badge-api">REST API</div>
+    <div class="doc-title">Email API</div>
+    <p class="doc-desc"><strong>POST</strong> para <code>https://mesinhasserver.vercel.app/api/email</code> — suporta os modos <code>anon</code>, <code>emailjs</code> e <code>formspree</code> via JSON. CORS habilitado para qualquer origem.</p>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Body (JSON)</div>
+    <div class="doc-table-wrap"><table class="doc-table">
+      <thead><tr><th>Campo</th><th>Modo</th><th>Req.</th><th>Descrição</th></tr></thead>
+      <tbody>
+        <tr><td>mode</td><td>todos</td><td style="color:#6affaa">✓</td><td>anon · emailjs · formspree</td></tr>
+        <tr><td>to</td><td>todos</td><td style="color:#6affaa">✓</td><td>E-mail do destinatário</td></tr>
+        <tr><td>subject</td><td>todos</td><td style="color:#6affaa">✓</td><td>Assunto da mensagem</td></tr>
+        <tr><td>message</td><td>todos</td><td style="color:#6affaa">✓</td><td>Corpo da mensagem</td></tr>
+        <tr><td>from_name</td><td>emailjs · formspree</td><td style="color:var(--muted)">—</td><td>Nome do remetente (opcional)</td></tr>
+        <tr><td>from_email</td><td>emailjs · formspree</td><td style="color:var(--muted)">—</td><td>E-mail do remetente (opcional)</td></tr>
+        <tr><td>ejs_key</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Public Key</td></tr>
+        <tr><td>ejs_service</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Service ID</td></tr>
+        <tr><td>ejs_template</td><td>emailjs</td><td style="color:#ffdd57">✓*</td><td>EmailJS Template ID</td></tr>
+        <tr><td>fs_id</td><td>formspree</td><td style="color:#ffdd57">✓*</td><td>Form ID do Formspree</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Respostas</div>
+    <div class="resp-chips">
+      <div class="resp-chip ok"><span class="chip-code">200</span> { "success": true, "mode": "anon" }</div>
+      <div class="resp-chip err"><span class="chip-code">400</span> { "success": false, "error": "Parâmetro mode é obrigatório" }</div>
+      <div class="resp-chip err"><span class="chip-code">429</span> { "success": false, "error": "Limite mensal atingido" }</div>
+      <div class="resp-chip err"><span class="chip-code">500</span> { "success": false, "error": "Erro interno" }</div>
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="doc-section-title">Guia de integração</div>
+    <div class="itab-bar">
+      <button class="itab-btn active" onclick="switchITab('apidoc-js', this)">HTML + JS</button>
+      <button class="itab-btn" onclick="switchITab('apidoc-kodular', this)">Kodular</button>
+    </div>
+
+    <div class="itab-panel active" id="itab-apidoc-js">
+      <div class="step-list">
+        <div class="step-block">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Como funciona</div>
+            <p class="step-desc">Um <code>fetch</code> com <code>method: 'POST'</code> e <code>Content-Type: application/json</code>. A API retorna JSON com <code>success: true/false</code>. CORS habilitado para qualquer origem.</p>
+            <div class="tip green">✓ Chamada HTTP direta — funciona de qualquer página ou domínio.</div>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Copie a função sendViaAPI</div>
+            <p class="step-desc">Cole no seu projeto. Retorna uma <strong>Promise</strong> — use <code>await</code> ou <code>.then/.catch</code>.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode('apidoc-step2')">copiar</button>
+              <pre id="apidoc-step2" style="white-space:pre-wrap"><span class="ck">const</span> API_URL = <span class="cs">"https://mesinhasserver.vercel.app/api/email"</span>;
+
+<span class="ck">async function</span> <span class="cv">sendViaAPI</span>(params) {
+  <span class="ck">const</span> res = <span class="ck">await</span> fetch(API_URL, {
+    method:  <span class="cs">'POST'</span>,
+    headers: { <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span> },
+    body:    JSON.stringify(params)
+  });
+  <span class="ck">const</span> data = <span class="ck">await</span> res.json();
+  <span class="ck">if</span> (!data.success) <span class="ck">throw new</span> Error(data.error || <span class="cs">'Erro desconhecido'</span>);
+  <span class="ck">return</span> data;
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Chame no clique do botão</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode('apidoc-step3')">copiar</button>
+              <pre id="apidoc-step3" style="white-space:pre-wrap">document.getElementById(<span class="cs">'btn-enviar'</span>).addEventListener(<span class="cs">'click'</span>, <span class="ck">async</span> () => {
+  <span class="ck">const</span> btn = document.getElementById(<span class="cs">'btn-enviar'</span>);
+  btn.disabled    = <span class="ck">true</span>;
+  btn.textContent = <span class="cs">'Enviando...'</span>;
+  <span class="ck">try</span> {
+    <span class="ck">await</span> sendViaAPI({
+      mode:    <span class="cs">'anon'</span>,
+      to:      document.getElementById(<span class="cs">'input-para'</span>).value,
+      subject: document.getElementById(<span class="cs">'input-assunto'</span>).value,
+      message: document.getElementById(<span class="cs">'input-mensagem'</span>).value
+    });
+    alert(<span class="cs">'✓ E-mail enviado!'</span>);
+  } <span class="ck">catch</span>(e) {
+    alert(<span class="cs">'✗ Erro: '</span> + e.message);
+  } <span class="ck">finally</span> {
+    btn.disabled    = <span class="ck">false</span>;
+    btn.textContent = <span class="cs">'Enviar'</span>;
+  }
+});</pre>
+            </div>
+            <div class="tip green">✓ O <code>finally</code> garante que o botão seja sempre reabilitado, mesmo em erros.</div>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Exemplo com mode emailjs</div>
+            <p class="step-desc">Para usar suas próprias credenciais passe os parâmetros extras. O mesmo padrão vale para <code>mode: 'formspree'</code> com <code>fs_id</code>.</p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode('apidoc-step4')">copiar</button>
+              <pre id="apidoc-step4" style="white-space:pre-wrap"><span class="ck">await</span> sendViaAPI({
+  mode:         <span class="cs">'emailjs'</span>,
+  to:           <span class="cs">'destino@email.com'</span>,
+  subject:      <span class="cs">'Olá!'</span>,
+  message:      <span class="cs">'Mensagem de teste via API.'</span>,
+  from_name:    <span class="cs">'João'</span>,
+  from_email:   <span class="cs">'joao@email.com'</span>,
+  ejs_key:      <span class="cs">'SUA_PUBLIC_KEY'</span>,
+  ejs_service:  <span class="cs">'service_xxxxxxx'</span>,
+  ejs_template: <span class="cs">'template_xxxxxxx'</span>
+});</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="itab-panel" id="itab-apidoc-kodular">
+      <div class="step-list">
+        <div class="step-block">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Como funciona</div>
+            <p class="step-desc">Use o componente <strong>Web</strong> com <code>PostText</code> passando o body JSON. A resposta chega no evento <code>Web.GotText</code> como string JSON — verifique se contém <code>"success":true</code>.</p>
+            <div class="tip green">✓ Mais simples que o TME — só um componente Web, sem WebViewer.</div>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Configure o componente Web</div>
+            <p class="step-desc">Arraste um componente <strong>Web</strong> invisível e nomeie <code>WebEmail</code>. Defina o header <code>Content-Type: application/json</code> via <code>Web.RequestHeaders</code>. URL: <code>https://mesinhasserver.vercel.app/api/email</code>.</p>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Monte o JSON e envie</div>
+            <p class="step-desc">Use <strong>Text → join</strong> para montar a string JSON com aspas duplas. Desabilite o botão antes de chamar <code>WebEmail.PostText</code>.</p>
+            <div class="tip yellow">⚠ Exemplo anon: <code>{"mode":"anon","to":"EMAIL","subject":"ASSUNTO","message":"MSG"}</code> — substitua pelos valores dos seus TextBoxes.</div>
+          </div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Leia a resposta no evento GotText</div>
+            <p class="step-desc">Em <code>WebEmail.GotText</code>, cheque <code>responseCode = 200</code>. Para extrair o erro: <code>segment(responseContent, "error\":\"", 2)</code> → <code>segment(resultado, "\"", 1)</code>. Reabilite o botão ao terminar.</p>
+            <div class="tip yellow">💡 <code>responseCode</code> contém o HTTP status (200, 400, 429, 500) — mais simples que parsear o JSON.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>REST API — AnonMail · Mesinhas · C1 Studios</footer>
+</div>
+
+</div>
+
+<script>
+  function switchITab(name, btn) {
+    const tabsDiv = btn.closest('.itab-bar');
+    tabsDiv.querySelectorAll('.itab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const section = tabsDiv.parentElement;
+    section.querySelectorAll('.itab-panel').forEach(p => p.classList.remove('active'));
+    section.querySelector('#itab-' + name).classList.add('active');
+  }
+
+  function copyCode(id) {
+    const el   = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn  = el.closest('.code-block').querySelector('.copy-btn');
+      const orig = btn.textContent;
+      btn.textContent = 'copiado!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+</script>
+</body>
+</html>
