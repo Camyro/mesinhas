@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://mesinhas.vercel.app/sitemap.xml
