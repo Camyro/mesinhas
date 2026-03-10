@@ -146,6 +146,12 @@
     .btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.08); border-color: white; }
     .btn-outline:disabled { opacity: 0.3; cursor: not-allowed; }
 
+    /* ── Download sections ── */
+    .dl-section-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); margin: 1rem 0 0.6rem;
+    }
+
     /* ── File list ── */
     .file-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
     .file-chip {
@@ -177,13 +183,45 @@
     .result-title.ok { color: var(--green); }
     .result-title.err { color: var(--red); }
     .result-sub { font-size: 0.76rem; color: var(--muted); margin-bottom: 1rem; }
+
+    /* ── Download actions area ── */
+    .dl-actions { display: flex; flex-direction: column; gap: 0.8rem; }
+
+    /* ZIP button */
     .result-dl {
       display: inline-flex; align-items: center; gap: 0.5rem;
       background: var(--green); color: #0a1a00; border-radius: 999px;
       font-size: 0.82rem; font-weight: 700; padding: 0.6rem 1.4rem;
       text-decoration: none; transition: opacity 0.2s, transform 0.15s;
+      align-self: flex-start;
     }
     .result-dl:hover { opacity: 0.88; transform: scale(1.02); }
+
+    /* Individual download list */
+    .individual-list {
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .individual-item {
+      display: flex; align-items: center; gap: 0.7rem;
+      background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 999px; padding: 0.4rem 0.5rem 0.4rem 0.9rem;
+    }
+    .individual-item-name {
+      flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; font-size: 0.74rem; color: rgba(255,255,255,0.65);
+    }
+    .individual-item-size {
+      font-size: 0.66rem; color: var(--muted); flex-shrink: 0;
+    }
+    .individual-dl {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(106,255,170,0.15); color: var(--green);
+      border: 1px solid rgba(106,255,170,0.25);
+      border-radius: 999px; font-size: 0.72rem; font-weight: 700;
+      padding: 0.35rem 0.9rem; text-decoration: none; flex-shrink: 0;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .individual-dl:hover { background: rgba(106,255,170,0.25); transform: scale(1.03); }
 
     /* ── Feedback ── */
     .feedback { margin-top: 1rem; font-size: 0.82rem; padding-left: 0.5rem; min-height: 1.2rem; }
@@ -401,7 +439,7 @@
 
 <footer>
   <div class="footer-inner">
-    <span class="footer-brand">Mesinhas · C1Studios</span>
+    <span class="footer-brand">mesinhas · C1Studios</span>
     <span class="footer-note">Ferramentas gratuitas.</span>
   </div>
 </footer>
@@ -525,14 +563,11 @@
   dropzone.addEventListener('drop', e => {
     e.preventDefault(); dropzone.classList.remove('drag-over');
     if (!dropzone.classList.contains('disabled')) {
-      // Create a DataTransfer to set files
-      const dt = e.dataTransfer;
-      const files = dt.files;
+      const files = e.dataTransfer.files;
       if (files.length) {
         renderFiles(files);
         convertBtn.disabled = false;
         clearBtn.style.display = 'inline-block';
-        // Store dropped files
         dropzone._droppedFiles = files;
       }
     }
@@ -583,8 +618,10 @@
 
     const output  = outputType.value;
     const quality = qualitySlider.value / 100;
-    const zip     = new JSZip();
     const total   = files.length;
+
+    // Collect converted blobs
+    const converted = []; // { name, blob }
 
     try {
       for (let i = 0; i < total; i++) {
@@ -601,7 +638,6 @@
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        // White background for formats that don't support alpha
         if (output === 'image/jpeg' || output === 'image/bmp') {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -617,18 +653,43 @@
         }
 
         const baseName = file.name.replace(/\.[^.]+$/, '') || 'imagem';
-        zip.file(baseName + getExt(output), blob);
+        converted.push({ name: baseName + getExt(output), blob });
         progressFill.style.width = pct + '%';
       }
 
+      // ── Build result UI ──
+      const outLabel = FORMAT_META[output]?.label || '';
+      const inLabel  = FORMAT_META[inputType.value]?.label || '';
+
+      // ZIP
       progressLabel.textContent = 'Gerando arquivo…';
+      const zip = new JSZip();
+      converted.forEach(({ name, blob }) => zip.file(name, blob));
       const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const url     = URL.createObjectURL(zipBlob);
+      const zipUrl  = URL.createObjectURL(zipBlob);
+
+      // Individual items
+      const individualItems = converted.map(({ name, blob }) => {
+        const url  = URL.createObjectURL(blob);
+        const size = formatBytes(blob.size);
+        return `
+          <div class="individual-item">
+            <span class="individual-item-name">${name}</span>
+            <span class="individual-item-size">${size}</span>
+            <a class="individual-dl" href="${url}" download="${name}">⬇ Baixar</a>
+          </div>
+        `;
+      }).join('');
 
       resultBox.innerHTML = `
         <div class="result-title ok">✓ Conversão concluída</div>
-        <div class="result-sub">${total} ${total === 1 ? 'imagem convertida' : 'imagens convertidas'} de ${FORMAT_META[inputType.value]?.label || ''} para ${FORMAT_META[output]?.label || ''}</div>
-        <a class="result-dl" href="${url}" download="imgconvert_${FORMAT_META[output]?.label?.toLowerCase() || 'output'}.zip">⬇ Baixar ZIP</a>
+        <div class="result-sub">${total} ${total === 1 ? 'imagem convertida' : 'imagens convertidas'} de ${inLabel} para ${outLabel}</div>
+        <div class="dl-actions">
+          <div class="dl-section-label">Baixar tudo</div>
+          <a class="result-dl" href="${zipUrl}" download="imgconvert_${outLabel.toLowerCase()}.zip">⬇ Baixar ZIP (${total} ${total === 1 ? 'arquivo' : 'arquivos'})</a>
+          <div class="dl-section-label" style="margin-top:1.2rem">Baixar individualmente</div>
+          <div class="individual-list">${individualItems}</div>
+        </div>
       `;
       resultBox.className = 'result-box show';
 
