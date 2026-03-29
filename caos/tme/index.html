@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<title>Caos AI — TME Architecture</title>
+</head>
+<body>
+<p>TME Architecture · Caos AI</p>
+<p id="status">Processando...</p>
+<p id="modelInfo"></p>
+<p id="reply" hidden></p>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   Caos AI — TME (Transparent Multi-Mode Execution)
+   Versão: 1.0.0  |  C1Studios / Mesinhas
+
+   PARÂMETROS (query string):
+     ?message=<texto>          — mensagem do usuário (obrigatório)
+     &system=<prompt>          — system prompt customizado (opcional)
+     &model=<id>               — modelo a forçar (opcional, ignorado se o
+                                 servidor não suportar)
+
+   RESULTADO — via hash + postMessage:
+     Sucesso → #result=success&reply=<texto>&model=<id>
+     Erro    → #result=error&msg=<descricao>
+
+   postMessage (para uso em WebView / iframe):
+     { tme: true, success: true,  reply: "...", model: "..." }
+     { tme: true, success: false, error: "..." }
+══════════════════════════════════════════════════════════════════ */
+
+const API_URL = "https://mesinhasserver.vercel.app/api/chat";
+
+/* ── Reporta resultado ── */
+function setResult(success, payload = {}) {
+  let hashStr;
+
+  if (success) {
+    hashStr =
+      `result=success` +
+      `&reply=${encodeURIComponent(payload.reply || '')}` +
+      `&model=${encodeURIComponent(payload.model || '')}`;
+  } else {
+    hashStr = `result=error&msg=${encodeURIComponent(payload.error || 'Erro desconhecido')}`;
+  }
+
+  window.location.hash = hashStr;
+
+  if (window.parent !== window) {
+    const msg = success
+      ? { tme: true, success: true,  reply: payload.reply || '', model: payload.model || '' }
+      : { tme: true, success: false, error: payload.error || 'Erro desconhecido' };
+    window.parent.postMessage(msg, '*');
+  }
+
+  const label = success
+    ? `✓ Resposta recebida | modelo: ${payload.model || '?'}`
+    : `✗ Erro: ${payload.error}`;
+
+  document.getElementById('status').textContent = label;
+  console.log('[Caos AI TME]', label);
+}
+
+/* ── Chamada à API ── */
+async function callAPI(params) {
+  const body = { message: params.message };
+  if (params.system) body.system = params.system;
+  if (params.model)  body.model  = params.model;
+
+  const res = await fetch(API_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+
+  // ── DEBUG: loga o JSON cru para identificar as chaves reais do servidor ──
+  console.log('[Caos AI TME] Raw API response:', JSON.stringify(data));
+
+  return data;
+}
+
+/* ── Exibe a resposta no corpo da página ── */
+function showReply(reply, model) {
+  const replyEl = document.getElementById('reply');
+  if (replyEl) {
+    replyEl.textContent = reply;
+    replyEl.removeAttribute('hidden');
+  }
+  if (model) {
+    const modelEl = document.getElementById('modelInfo');
+    if (modelEl) modelEl.textContent = 'Modelo: ' + model;
+  }
+}
+
+/* ── Entry point ── */
+async function main() {
+  const p = new URLSearchParams(window.location.search);
+
+  const params = {
+    message: p.get('message') || '',
+    system:  p.get('system')  || '',
+    model:   p.get('model')   || '',
+  };
+
+  console.log('[Caos AI TME] Parâmetros:', params);
+
+  if (!params.message) {
+    return setResult(false, { error: 'Parâmetro message é obrigatório' });
+  }
+
+  try {
+    const data = await callAPI(params);
+
+    // tenta todas as chaves possíveis para a resposta
+    const reply = data.reply || data.content || data.text || data.message || data.output || '';
+
+    // tenta todas as chaves possíveis para o modelo
+    // se nenhuma bater, pega o primeiro campo que contenha "model" no nome
+    let model = data.model || data.modelId || data.modelName || data.model_id || data.used_model || '';
+    if (!model) {
+      const modelKey = Object.keys(data).find(k => k.toLowerCase().includes('model'));
+      if (modelKey) model = String(data[modelKey]);
+    }
+
+    if (!reply) {
+      return setResult(false, { error: 'A IA não retornou resposta' });
+    }
+
+    showReply(reply, model);
+    setResult(true, { reply, model });
+
+  } catch (e) {
+    setResult(false, { error: e?.message || 'Falha na conexão com a IA' });
+  }
+}
+
+main();
+</script>
+</body>
+</html>
