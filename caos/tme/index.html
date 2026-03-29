@@ -33,32 +33,34 @@ const API_URL = "https://mesinhasserver.vercel.app/api/chat";
 
 /* ── Reporta resultado ── */
 function setResult(success, payload = {}) {
-  let hashStr;
+  let url;
 
   if (success) {
-    hashStr =
-      `result=success` +
-      `&reply=${encodeURIComponent(payload.reply || '')}` +
-      `&model=${encodeURIComponent(payload.model || '')}`;
+    const model = encodeURIComponent(payload.model || 'unknown');
+    const reply = encodeURIComponent(payload.reply || '');
+
+    // 🔥 formato: /modelo/mensagem
+    url = `https://causai.resul/${model}/${reply}`;
   } else {
-    hashStr = `result=error&msg=${encodeURIComponent(payload.error || 'Erro desconhecido')}`;
+    const error = encodeURIComponent(payload.error || 'erro');
+
+    // 🔥 erro separado
+    url = `https://causai.resul/error/${error}`;
   }
 
-  window.location.hash = hashStr;
+  // redireciona
+  window.location.href = url;
 
+  // mantém suporte a iframe/webview
   if (window.parent !== window) {
     const msg = success
-      ? { tme: true, success: true,  reply: payload.reply || '', model: payload.model || '' }
+      ? { tme: true, success: true, reply: payload.reply || '', model: payload.model || '' }
       : { tme: true, success: false, error: payload.error || 'Erro desconhecido' };
+
     window.parent.postMessage(msg, '*');
   }
 
-  const label = success
-    ? `✓ Resposta recebida | modelo: ${payload.model || '?'}`
-    : `✗ Erro: ${payload.error}`;
-
-  document.getElementById('status').textContent = label;
-  console.log('[Caos AI TME]', label);
+  console.log('[Caos AI TME] Redirecionando...');
 }
 
 /* ── Chamada à API ── */
