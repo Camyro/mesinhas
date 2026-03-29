@@ -9,545 +9,313 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
 
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
+:root {
+  --bg: #C41010; --bg2: #B50E0E; --pill: #d01e1e; --pill-focus: #e02828;
+  --text: #ffffff; --muted: rgba(255,255,255,0.42); --border: rgba(255,255,255,0.11);
+  --surface: rgba(0,0,0,0.15); --radius: 1.4rem; --sidebar-w: 230px;
+}
 
-  :root {
-    --bg:         #C41010;
-    --bg2:        #B50E0E;
-    --pill:       #d01e1e;
-    --pill-focus: #e02828;
-    --text:       #ffffff;
-    --muted:      rgba(255,255,255,0.42);
-    --border:     rgba(255,255,255,0.11);
-    --surface:    rgba(0,0,0,0.15);
-    --surface-h:  rgba(0,0,0,0.25);
-    --radius:     1.4rem;
-    --sidebar-w:  230px;
-  }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex;
-    flex-direction: column;
-  }
+/* ── TOP NAV ── */
+.top-nav { background: rgba(0,0,0,0.22); border-bottom: 1px solid var(--border); padding: 0 1.4rem; height: 46px; display: flex; align-items: center; gap: 0.75rem; position: sticky; top: 0; z-index: 200; flex-shrink: 0; }
+.back-btn { display: inline-flex; align-items: center; gap: 0.4rem; color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); transition: color 0.2s, background 0.2s; }
+.back-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+.back-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+.nav-title { font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.3px; }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+.model-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.13); border-radius: 999px; padding: 0.26rem 0.85rem; font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.6); white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.dot-online { width: 6px; height: 6px; border-radius: 50%; background: #6affaa; box-shadow: 0 0 5px #6affaa; animation: pulse 2s infinite; flex-shrink: 0; }
 
-  /* ── TOP NAV ── */
-  .top-nav {
-    background: rgba(0,0,0,0.22);
-    border-bottom: 1px solid var(--border);
-    padding: 0 1.4rem;
-    height: 46px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    position: sticky;
-    top: 0;
-    z-index: 200;
-    flex-shrink: 0;
-  }
-  .back-btn {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    color: rgba(255,255,255,0.5); text-decoration: none;
-    font-size: 0.75rem; font-weight: 600;
-    padding: 0.25rem 0.75rem; border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.14);
-    transition: color 0.2s, background 0.2s;
-  }
-  .back-btn:hover { color: white; background: rgba(255,255,255,0.1); }
-  .back-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
-  .nav-title { font-size: 0.82rem; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 0.3px; }
-  .nav-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
-  .model-badge {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    background: rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.13);
-    border-radius: 999px;
-    padding: 0.26rem 0.85rem;
-    font-size: 0.68rem; font-weight: 600;
-    color: rgba(255,255,255,0.6);
-    white-space: nowrap;
-  }
-  .dot-online {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #6affaa; box-shadow: 0 0 5px #6affaa;
-    animation: pulse 2s infinite; flex-shrink: 0;
-  }
+/* ── PAGE WRAP ── */
+.page-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; height: calc(100vh - 46px); min-height: 0; }
 
-  /* ── PAGE WRAP ── */
-  .page-wrap {
-    flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; height: calc(100vh - 46px); min-height: 0;
-  }
+/* ── TAB BAR ── */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 1.4rem; flex-shrink: 0; background: rgba(0,0,0,0.12); }
+.tab-btn { background: none; border: none; color: var(--muted); font-family: 'DM Sans',sans-serif; font-size: 0.8rem; font-weight: 600; padding: 0.65rem 1rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--text); border-bottom-color: white; }
+.tab-panel { display: none; flex: 1; overflow: hidden; min-height: 0; }
+.tab-panel.active { display: flex; flex: 1; min-height: 0; }
 
-  /* ── TAB BAR ── */
-  .tab-bar {
-    display: flex; gap: 0; border-bottom: 1px solid var(--border);
-    padding: 0 1.4rem; flex-shrink: 0;
-    background: rgba(0,0,0,0.12);
-  }
-  .tab-btn {
-    background: none; border: none; color: var(--muted);
-    font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600;
-    padding: 0.65rem 1rem; cursor: pointer;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: var(--text); border-bottom-color: white; }
+/* ── CHAT LAYOUT ── */
+.chat-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
-  .tab-panel { display: none; flex: 1; overflow: hidden; min-height: 0; }
-  .tab-panel.active { display: flex; flex: 1; min-height: 0; }
+/* ── SIDEBAR ── */
+.sidebar { width: var(--sidebar-w); background: rgba(0,0,0,0.2); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem 0.65rem; gap: 0.65rem; flex-shrink: 0; overflow: hidden; min-height: 0; transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+.sidebar-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.22); padding: 0 0.4rem; display: flex; align-items: center; gap: 0.5rem; }
+.sidebar-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+.btn-new { display: flex; align-items: center; gap: 0.45rem; background: rgba(255,255,255,0.09); border: 1px solid var(--border); border-radius: 999px; color: white; font-family: 'DM Sans',sans-serif; font-size: 0.77rem; font-weight: 600; padding: 0.5rem 0.95rem; cursor: pointer; transition: background 0.2s, border-color 0.2s; width: 100%; }
+.btn-new:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.25); }
+.btn-new svg { flex-shrink: 0; }
+.conv-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.18rem; }
+.conv-list::-webkit-scrollbar { width: 3px; }
+.conv-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.conv-item { display: flex; justify-content: space-between; align-items: center; gap: 0.35rem; padding: 0.48rem 0.7rem; border-radius: 999px; font-size: 0.75rem; cursor: pointer; color: var(--muted); transition: background 0.15s, color 0.15s; border: 1px solid transparent; }
+.conv-item:hover { background: rgba(255,255,255,0.07); color: white; border-color: var(--border); }
+.conv-item.active { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.16); }
+.conv-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-item .del { background: none; border: none; color: rgba(255,255,255,0.28); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 999px; opacity: 0; transition: opacity 0.15s, color 0.15s; flex-shrink: 0; }
+.conv-item:hover .del { opacity: 1; }
+.conv-item .del:hover { color: #ff8080; }
+.sidebar-footer { font-size: 0.63rem; color: rgba(255,255,255,0.18); padding: 0.5rem 0.4rem 0; border-top: 1px solid var(--border); }
 
-  /* ── CHAT LAYOUT ── */
-  .chat-layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+/* ── CHAT MAIN ── */
+.chat-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+.chat-messages { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1.6rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem; min-height: 0; }
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: var(--sidebar-w);
-    background: rgba(0,0,0,0.2);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    padding: 1rem 0.65rem; gap: 0.65rem;
-    flex-shrink: 0; overflow: hidden; min-height: 0;
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-  }
-  .sidebar-label {
-    font-size: 0.58rem; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; color: rgba(255,255,255,0.22);
-    padding: 0 0.4rem; display: flex; align-items: center; gap: 0.5rem;
-  }
-  .sidebar-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
-  .btn-new {
-    display: flex; align-items: center; gap: 0.45rem;
-    background: rgba(255,255,255,0.09); border: 1px solid var(--border);
-    border-radius: 999px; color: white;
-    font-family: 'DM Sans', sans-serif; font-size: 0.77rem; font-weight: 600;
-    padding: 0.5rem 0.95rem; cursor: pointer;
-    transition: background 0.2s, border-color 0.2s; width: 100%;
-  }
-  .btn-new:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.25); }
-  .btn-new svg { flex-shrink: 0; }
+/* Empty state */
+.empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; color: var(--muted); text-align: center; padding: 3rem; margin: auto; }
+.empty-state svg { opacity: 0.28; }
+.empty-state p { font-size: 0.83rem; line-height: 1.75; color: rgba(255,255,255,0.35); }
 
-  .conv-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.18rem; }
-  .conv-list::-webkit-scrollbar { width: 3px; }
-  .conv-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+/* Bubbles */
+.msg-wrap { display: flex; gap: 0.6rem; animation: fadeUp 0.2s ease; width: 100%; min-width: 0; }
+.msg-wrap.user { flex-direction: row-reverse; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16); display: flex; align-items: center; justify-content: center; font-size: 0.56rem; font-weight: 700; flex-shrink: 0; margin-top: 3px; letter-spacing: 0.3px; }
+.msg-wrap.user .avatar { background: rgba(255,255,255,0.24); }
+.msg-content { display: flex; flex-direction: column; max-width: min(68%, 480px); min-width: 0; }
+.msg-wrap.user .msg-content { align-items: flex-end; }
+.msg-wrap.bot  .msg-content { align-items: flex-start; }
+.bubble { padding: 0.65rem 1rem; border-radius: 1.15rem; font-size: 0.83rem; line-height: 1.65; word-break: break-word; white-space: pre-wrap; display: inline-block; max-width: 100%; }
+.msg-wrap.user .bubble { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.2); border-bottom-right-radius: 4px; }
+.msg-wrap.bot  .bubble { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-bottom-left-radius: 4px; }
+.thinking { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+.thinking span { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.45); animation: bounce 1.2s infinite ease-in-out; }
+.thinking span:nth-child(2) { animation-delay: 0.18s; }
+.thinking span:nth-child(3) { animation-delay: 0.36s; }
+@keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+.msg-model { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.4px; color: rgba(255,255,255,0.22); margin-top: 0.22rem; padding: 0 0.25rem; }
+.msg-model.engine-cerebras    { color: rgba(255,200,100,0.5); }
+.msg-model.engine-huggingface { color: rgba(180,180,255,0.5); }
+.msg-model.engine-mistral     { color: rgba(106,255,170,0.55); }
 
-  .conv-item {
-    display: flex; justify-content: space-between; align-items: center; gap: 0.35rem;
-    padding: 0.48rem 0.7rem; border-radius: 999px;
-    font-size: 0.75rem; cursor: pointer; color: var(--muted);
-    transition: background 0.15s, color 0.15s; border: 1px solid transparent;
-  }
-  .conv-item:hover { background: rgba(255,255,255,0.07); color: white; border-color: var(--border); }
-  .conv-item.active { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.16); }
-  .conv-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .conv-item .del {
-    background: none; border: none; color: rgba(255,255,255,0.28);
-    cursor: pointer; font-size: 11px; padding: 2px 4px;
-    border-radius: 999px; opacity: 0; transition: opacity 0.15s, color 0.15s; flex-shrink: 0;
-  }
-  .conv-item:hover .del { opacity: 1; }
-  .conv-item .del:hover { color: #ff8080; }
-  .sidebar-footer { font-size: 0.63rem; color: rgba(255,255,255,0.18); padding: 0.5rem 0.4rem 0; border-top: 1px solid var(--border); }
+/* Summary/notices */
+.summarize-notice { display: flex; align-items: center; gap: 0.45rem; font-size: 0.65rem; color: rgba(255,255,255,0.28); padding: 0.3rem 0.6rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 999px; width: fit-content; margin: 0 auto; animation: fadeUp 0.2s ease; }
+.summarize-notice .dot-spin { width: 6px; height: 6px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.2); border-top-color: rgba(255,255,255,0.55); animation: spin 0.8s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.summary-badge { display: flex; align-items: center; gap: 0.45rem; font-size: 0.62rem; color: rgba(255,255,255,0.22); padding: 0.28rem 0.7rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 999px; width: fit-content; margin: 0 auto; }
+.summary-badge svg { flex-shrink: 0; opacity: 0.5; }
 
-  /* ── CHAT MAIN ── */
-  .chat-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+/* ── INPUT AREA ── */
+.input-area { padding: 0.85rem 1.5rem 1.2rem; border-top: 1px solid var(--border); display: flex; gap: 0.55rem; align-items: flex-end; flex-shrink: 0; background: rgba(0,0,0,0.1); }
+.input-wrap { flex: 1; position: relative; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
 
-  .chat-messages {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 1.6rem 1.5rem; display: flex; flex-direction: column;
-    gap: 0.85rem; min-height: 0;
-  }
-  .chat-messages::-webkit-scrollbar { width: 4px; }
-  .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
+/* Textarea — arredondado só quando 1 linha, retangular quando expande */
+#msgInput {
+  width: 100%; padding: 0.7rem 1.15rem;
+  background: var(--pill); border: 1.5px solid transparent;
+  border-radius: 1.4rem;          /* começa arredondado */
+  color: white; font-family: 'DM Sans',sans-serif; font-size: 0.84rem;
+  outline: none; resize: none;
+  min-height: 42px; max-height: 160px;
+  overflow-y: auto;
+  transition: background 0.2s, border-color 0.2s, border-radius 0.15s;
+  line-height: 1.5; display: block;
+}
+#msgInput.expanded { border-radius: 0.9rem; } /* quando tem mais de 1 linha */
+#msgInput::placeholder { color: var(--muted); }
+#msgInput:focus { background: var(--pill-focus); border-color: rgba(255,255,255,0.28); }
+#msgInput::-webkit-scrollbar { width: 3px; }
+#msgInput::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
 
-  /* Empty state */
-  .empty-state {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 0.75rem; color: var(--muted); text-align: center; padding: 3rem;
-    margin: auto;
-  }
-  .empty-state svg { opacity: 0.28; }
-  .empty-state p { font-size: 0.83rem; line-height: 1.75; color: rgba(255,255,255,0.35); }
+/* ── TOOLBAR ── */
+.input-toolbar { display: flex; gap: 0.35rem; padding: 0 0.1rem; flex-wrap: wrap; align-items: center; }
 
-  /* Message bubbles */
-  .msg-wrap {
-    display: flex; gap: 0.6rem;
-    animation: fadeUp 0.2s ease;
-    width: 100%; min-width: 0;
-  }
-  .msg-wrap.user { flex-direction: row-reverse; }
+.chip-base { display: inline-flex; align-items: center; gap: 0.32rem; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.13); border-radius: 999px; color: rgba(255,255,255,0.42); font-family: 'DM Sans',sans-serif; font-size: 0.69rem; font-weight: 600; padding: 0.26rem 0.7rem; cursor: pointer; transition: all 0.18s; white-space: nowrap; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.chip-base:hover { color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.11); }
+.chip-base:active { transform: scale(0.95); }
+.web-toggle.active       { background: rgba(106,255,170,0.1); border-color: rgba(106,255,170,0.45); color: #6affaa; }
+.engine-auto.active      { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); color: #fff; }
+.engine-cerebras.active  { background: rgba(255,200,100,0.12); border-color: rgba(255,200,100,0.45); color: #ffc864; }
+.engine-hf.active        { background: rgba(180,180,255,0.12); border-color: rgba(180,180,255,0.45); color: #b4b4ff; }
+.engine-mistral.active   { background: rgba(106,255,170,0.1); border-color: rgba(106,255,170,0.45); color: #6affaa; }
+.toolbar-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.12); align-self: center; flex-shrink: 0; }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(5px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+/* ── MODEL DROPDOWN ── */
+.model-select-wrap { position: relative; display: inline-flex; align-items: center; }
+.model-select-wrap select { appearance: none; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.13); border-radius: 999px; color: rgba(255,255,255,0.72); font-family: 'DM Sans',sans-serif; font-size: 0.67rem; font-weight: 600; padding: 0.26rem 1.6rem 0.26rem 0.7rem; cursor: pointer; outline: none; transition: all 0.18s; }
+.model-select-wrap select:hover, .model-select-wrap select:focus { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: white; }
+.model-select-wrap::after { content: '▾'; position: absolute; right: 0.55rem; pointer-events: none; font-size: 0.6rem; color: rgba(255,255,255,0.42); }
+.model-select-wrap select option { background: #8b0000; color: white; }
 
-  .avatar {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.56rem; font-weight: 700;
-    flex-shrink: 0; margin-top: 3px; letter-spacing: 0.3px;
-  }
-  .msg-wrap.user .avatar { background: rgba(255,255,255,0.24); }
+#engineIndicator { display: none; align-items: center; gap: 0.3rem; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; color: rgba(255,255,255,0.3); padding: 0 0.2rem; }
+#engineIndicator.visible { display: inline-flex; }
+#engineIndicator .ei-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
-  .msg-content {
-    display: flex; flex-direction: column;
-    max-width: min(68%, 480px);
-    min-width: 0;
-  }
-  .msg-wrap.user .msg-content { align-items: flex-end; }
-  .msg-wrap.bot  .msg-content { align-items: flex-start; }
+/* Send button */
+.btn-send { background: white; color: var(--bg); border: none; border-radius: 999px; font-family: 'DM Sans',sans-serif; font-size: 0.81rem; font-weight: 700; padding: 0.7rem 1.5rem; cursor: pointer; transition: opacity 0.2s, transform 0.15s; white-space: nowrap; flex-shrink: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.btn-send:hover:not(:disabled) { opacity: 0.88; transform: scale(1.02); }
+.btn-send:active:not(:disabled) { transform: scale(0.95); }
+.btn-send:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
 
-  .bubble {
-    padding: 0.65rem 1rem;
-    border-radius: 1.15rem;
-    font-size: 0.83rem; line-height: 1.65;
-    word-break: break-word; word-wrap: break-word;
-    white-space: pre-wrap;
-    display: inline-block; max-width: 100%;
-  }
-  .msg-wrap.user .bubble {
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-bottom-right-radius: 4px;
-  }
-  .msg-wrap.bot .bubble {
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-bottom-left-radius: 4px;
-  }
+/* ── PAINEL ── */
+.panel-wrap { flex: 1; overflow-y: auto; padding: 1.8rem; display: flex; flex-direction: column; gap: 0; width: 100%; min-height: 0; }
+.panel-wrap > * { max-width: 700px; }
+.panel-wrap::-webkit-scrollbar { width: 4px; }
+.panel-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
+.panel-section-title { font-size: 0.58rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.22); margin: 1.6rem 0 0.85rem; display: flex; align-items: center; gap: 0.55rem; }
+.panel-section-title:first-child { margin-top: 0; }
+.panel-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+.counters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+.counter-box { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 1.2rem; padding: 1.2rem; }
+.counter-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 0.55rem; }
+.counter-value { font-size: 2.4rem; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+.counter-value.warning { color: #ffdd57; }
+.counter-value.limit   { color: #ff8080; }
+.counter-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.28rem; }
+.counter-status { display: inline-flex; align-items: center; gap: 0.38rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09); border-radius: 999px; padding: 0.22rem 0.7rem; font-size: 0.62rem; color: var(--muted); margin-top: 0.7rem; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot.online  { background: #6affaa; box-shadow: 0 0 5px #6affaa; animation: pulse 2s infinite; }
+.dot.offline { background: rgba(255,255,255,0.18); }
+.dot.error   { background: #ff8080; }
+.panel-note { font-size: 0.7rem; color: rgba(255,255,255,0.18); margin-top: 1rem; line-height: 1.75; }
 
-  /* Thinking dots */
-  .thinking { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
-  .thinking span {
-    width: 5px; height: 5px; border-radius: 50%;
-    background: rgba(255,255,255,0.45);
-    animation: bounce 1.2s infinite ease-in-out;
-  }
-  .thinking span:nth-child(2) { animation-delay: 0.18s; }
-  .thinking span:nth-child(3) { animation-delay: 0.36s; }
-  @keyframes bounce {
-    0%,80%,100% { transform: translateY(0); }
-    40%          { transform: translateY(-5px); }
-  }
+/* Firebase banner */
+.fb-banner { display: flex; align-items: center; gap: 0.6rem; background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.18); border-radius: 0.9rem; padding: 0.75rem 1rem; font-size: 0.73rem; color: rgba(255,200,200,0.7); margin-bottom: 0.5rem; }
+.fb-banner.ok { background: rgba(106,255,170,0.06); border-color: rgba(106,255,170,0.15); color: rgba(180,255,210,0.65); }
+.fb-banner svg { flex-shrink: 0; opacity: 0.7; }
 
-  .msg-model {
-    font-size: 0.58rem; font-weight: 600; letter-spacing: 0.4px;
-    color: rgba(255,255,255,0.22); margin-top: 0.22rem;
-    padding: 0 0.25rem;
-  }
-  .msg-model.engine-cerebras    { color: rgba(255,200,100,0.5); }
-  .msg-model.engine-huggingface { color: rgba(180,180,255,0.5); }
-  .msg-model.engine-mistral     { color: rgba(106,255,170,0.55); }
+/* ── OVERLAY ── */
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
+#overlay.open { display: block; }
+#menuBtn { display: none; background: none; border: none; color: white; cursor: pointer; padding: 4px; -webkit-tap-highlight-color: transparent; }
 
-  /* ── INPUT AREA ── */
+/* ══════════════════════════════════════════════
+   TABLET  (641px – 1024px)
+══════════════════════════════════════════════ */
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root { --sidebar-w: 200px; }
+
+  .top-nav { padding: 0 1rem; }
+  .model-badge { max-width: 160px; font-size: 0.63rem; }
+
+  .chat-messages { padding: 1.2rem 1.1rem; gap: 0.75rem; }
+  .msg-content { max-width: 75%; }
+
+  .input-area { padding: 0.75rem 1rem 1rem; gap: 0.45rem; }
+  #msgInput { font-size: 0.9rem; padding: 0.72rem 1rem; }
+
+  /* Toolbar em 2 linhas bem organizadas */
+  .input-toolbar { gap: 0.28rem; row-gap: 0.35rem; }
+  .chip-base { font-size: 0.68rem; padding: 0.28rem 0.65rem; }
+
+  .btn-send { font-size: 0.85rem; padding: 0.72rem 1.25rem; }
+
+  .panel-wrap { padding: 1.2rem 1rem; }
+  .counters-row { gap: 0.7rem; }
+  .counter-box { padding: 1rem; }
+  .counter-value { font-size: 2rem; }
+}
+
+/* ══════════════════════════════════════════════
+   MOBILE  (≤ 640px)
+══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Sidebar como drawer */
+  .sidebar { position: fixed; top: 46px; left: 0; height: calc(100% - 46px); z-index: 100; transform: translateX(-100%); width: 80vw; max-width: 280px; }
+  .sidebar.open { transform: translateX(0); }
+  #menuBtn { display: block; }
+
+  /* Nav */
+  .top-nav { padding: 0 0.85rem; gap: 0.55rem; }
+  .nav-title { font-size: 0.78rem; }
+  .model-badge { max-width: 130px; font-size: 0.6rem; padding: 0.22rem 0.65rem; }
+  .back-btn { font-size: 0.7rem; padding: 0.22rem 0.6rem; }
+
+  /* Mensagens */
+  .chat-messages { padding: 0.85rem 0.75rem; gap: 0.7rem; }
+  .msg-content { max-width: 86%; }
+  .bubble { font-size: 0.87rem; padding: 0.6rem 0.9rem; }
+  .avatar { width: 24px; height: 24px; font-size: 0.5rem; }
+
+  /* Input area — empilha verticalmente */
   .input-area {
-    padding: 0.85rem 1.5rem 1.2rem;
-    border-top: 1px solid var(--border);
-    display: flex; gap: 0.55rem; align-items: flex-end;
-    flex-shrink: 0; background: rgba(0,0,0,0.1);
+    padding: 0.6rem 0.75rem 0.85rem;
+    gap: 0.4rem;
+    flex-direction: column;
+    align-items: stretch;
   }
-  .input-wrap { flex: 1; position: relative; display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
-
+  .input-wrap { gap: 0.35rem; }
   #msgInput {
-    width: 100%; padding: 0.7rem 1.15rem;
-    background: var(--pill); border: 1.5px solid transparent;
-    border-radius: 999px; color: white;
-    font-family: 'DM Sans', sans-serif; font-size: 0.84rem;
-    outline: none; resize: none; max-height: 120px; overflow-y: auto;
-    transition: background 0.2s, border-color 0.2s; line-height: 1.5; display: block;
-  }
-  #msgInput::placeholder { color: var(--muted); }
-  #msgInput:focus { background: var(--pill-focus); border-color: rgba(255,255,255,0.28); }
-  #msgInput::-webkit-scrollbar { width: 3px; }
-
-  /* ── TOOLBAR ── */
-  .input-toolbar { display: flex; gap: 0.35rem; padding: 0 0.1rem; flex-wrap: wrap; }
-
-  /* Web toggle — base style shared with model chips */
-  .web-toggle {
-    display: inline-flex; align-items: center; gap: 0.32rem;
-    background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.13);
-    border-radius: 999px; color: rgba(255,255,255,0.42);
-    font-family: 'DM Sans', sans-serif; font-size: 0.69rem; font-weight: 600;
-    padding: 0.26rem 0.7rem; cursor: pointer; transition: all 0.18s;
-  }
-  .web-toggle:hover { color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.11); }
-  .web-toggle.active { background: rgba(106,255,170,0.1); border-color: rgba(106,255,170,0.45); color: #6affaa; }
-
-  /* ── MODEL CHIPS ── same shape as web-toggle ── */
-  .model-chip {
-    display: inline-flex; align-items: center; gap: 0.32rem;
-    background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.13);
-    border-radius: 999px; color: rgba(255,255,255,0.42);
-    font-family: 'DM Sans', sans-serif; font-size: 0.69rem; font-weight: 600;
-    padding: 0.26rem 0.7rem; cursor: pointer; transition: all 0.18s;
-    white-space: nowrap;
-  }
-  .model-chip:hover { color: white; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.11); }
-
-  /* active states per engine */
-  .model-chip.active-auto        { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); color: #ffffff; }
-  .model-chip.active-cerebras    { background: rgba(255,200,100,0.12); border-color: rgba(255,200,100,0.45); color: #ffc864; }
-  .model-chip.active-huggingface { background: rgba(180,180,255,0.12); border-color: rgba(180,180,255,0.45); color: #b4b4ff; }
-  .model-chip.active-mistral     { background: rgba(106,255,170,0.10); border-color: rgba(106,255,170,0.45); color: #6affaa; }
-
-  /* toolbar divider */
-  .toolbar-divider {
-    width: 1px; height: 16px; background: rgba(255,255,255,0.12);
-    align-self: center; flex-shrink: 0;
+    font-size: 1rem;           /* evita zoom no iOS ao focar */
+    padding: 0.65rem 1rem;
+    max-height: 140px;
+    min-height: 44px;
   }
 
+  /* Toolbar scrollável horizontalmente */
+  .input-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 0.25rem;
+    padding: 0.1rem 0.05rem 0.3rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .input-toolbar::-webkit-scrollbar { display: none; }
+  .chip-base { font-size: 0.68rem; padding: 0.28rem 0.65rem; flex-shrink: 0; }
+  .model-select-wrap select { font-size: 0.65rem; padding: 0.26rem 1.4rem 0.26rem 0.6rem; }
+
+  /* Botão enviar — largura total na linha de baixo */
   .btn-send {
-    background: white; color: var(--bg); border: none; border-radius: 999px;
-    font-family: 'DM Sans', sans-serif; font-size: 0.81rem; font-weight: 700;
-    padding: 0.7rem 1.5rem; cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s; white-space: nowrap; flex-shrink: 0;
-  }
-  .btn-send:hover:not(:disabled) { opacity: 0.88; transform: scale(1.02); }
-  .btn-send:active { transform: scale(0.97); }
-  .btn-send:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
-
-  /* ── DOC / PANEL SHARED ── */
-  .doc-wrap {
-    flex: 1; overflow-y: auto; padding: 2rem; width: 100%; min-height: 0;
-  }
-  .doc-wrap > * { max-width: 700px; }
-  .doc-wrap::-webkit-scrollbar { width: 4px; }
-  .doc-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
-
-  /* ── PAINEL TAB ── */
-  .panel-wrap {
-    flex: 1; overflow-y: auto; padding: 1.8rem;
-    display: flex; flex-direction: column; gap: 0; width: 100%; min-height: 0;
-  }
-  .panel-wrap > * { max-width: 700px; }
-  .panel-wrap::-webkit-scrollbar { width: 4px; }
-  .panel-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.13); border-radius: 4px; }
-
-  .panel-section-title {
-    font-size: 0.58rem; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; color: rgba(255,255,255,0.22);
-    margin: 1.6rem 0 0.85rem; display: flex; align-items: center; gap: 0.55rem;
-  }
-  .panel-section-title:first-child { margin-top: 0; }
-  .panel-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
-
-  .counters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
-  .counter-box {
-    background: rgba(0,0,0,0.2); border: 1px solid var(--border);
-    border-radius: 1.2rem; padding: 1.2rem;
-  }
-  .counter-title { font-size: 0.6rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 0.55rem; }
-  .counter-value { font-size: 2.6rem; font-weight: 700; line-height: 1; letter-spacing: -2px; }
-  .counter-value.warning { color: #ffdd57; }
-  .counter-value.limit   { color: #ff8080; }
-  .counter-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.28rem; }
-  .counter-status {
-    display: inline-flex; align-items: center; gap: 0.38rem;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 999px; padding: 0.22rem 0.7rem;
-    font-size: 0.62rem; color: var(--muted); margin-top: 0.7rem;
-  }
-  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .dot.online  { background: #6affaa; box-shadow: 0 0 5px #6affaa; animation: pulse 2s infinite; }
-  .dot.offline { background: rgba(255,255,255,0.18); }
-  .dot.error   { background: #ff8080; }
-  .panel-note { font-size: 0.7rem; color: rgba(255,255,255,0.18); margin-top: 1rem; line-height: 1.75; }
-
-  /* ── Firebase status banner ── */
-  .fb-banner {
-    display: flex; align-items: center; gap: 0.6rem;
-    background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.18);
-    border-radius: 0.9rem; padding: 0.75rem 1rem;
-    font-size: 0.73rem; color: rgba(255,200,200,0.7); margin-bottom: 0.5rem;
-  }
-  .fb-banner.ok { background: rgba(106,255,170,0.06); border-color: rgba(106,255,170,0.15); color: rgba(180,255,210,0.65); }
-  .fb-banner svg { flex-shrink: 0; opacity: 0.7; }
-
-  /* ── DOC HERO ── */
-  .doc-hero {
-    position: relative; overflow: hidden; border-radius: 1.4rem;
-    padding: 1.6rem 1.8rem; margin-bottom: 1.8rem;
-  }
-  .doc-hero::before {
-    content: ''; position: absolute; inset: 0; border-radius: inherit;
-    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
-    border: 1px solid rgba(255,255,255,0.1); pointer-events: none;
-  }
-  .doc-hero-tme::after {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 180px; height: 180px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,120,120,0.14) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .doc-hero-api::after {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 180px; height: 180px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(126,200,227,0.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .doc-badge {
-    display: inline-flex; align-items: center; border-radius: 999px;
-    padding: 0.18rem 0.75rem; font-size: 0.58rem; font-weight: 700;
-    letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem;
-  }
-  .doc-badge-tme { background: rgba(255,120,120,0.1); border: 1px solid rgba(255,120,120,0.22); color: #ffaaaa; }
-  .doc-badge-api { background: rgba(126,200,227,0.08); border: 1px solid rgba(126,200,227,0.22); color: #7ec8e3; }
-  .doc-title { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 0.55rem; }
-  .doc-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.8; position: relative; }
-  .doc-desc code, .step-desc code {
-    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 4px; padding: 0.08rem 0.38rem;
-    font-size: 0.72rem; color: rgba(255,255,255,0.82);
-    font-family: 'Courier New', monospace;
+    width: 100%;
+    font-size: 0.9rem;
+    padding: 0.72rem 1rem;
+    border-radius: 1rem;
+    text-align: center;
   }
 
-  .doc-section { margin-top: 1.8rem; }
-  .doc-section-title {
-    font-size: 0.57rem; font-weight: 700; letter-spacing: 3.5px;
-    text-transform: uppercase; color: rgba(255,255,255,0.2); margin-bottom: 0.9rem;
-    display: flex; align-items: center; gap: 0.7rem;
-  }
-  .doc-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, rgba(255,255,255,0.06), transparent); }
+  /* Painel */
+  .panel-wrap { padding: 1rem 0.85rem; }
+  .counters-row { grid-template-columns: 1fr; gap: 0.65rem; }
+  .counter-box { padding: 1rem; }
+  .counter-value { font-size: 2rem; }
+  .panel-section-title { margin: 1.2rem 0 0.7rem; }
+}
 
-  .doc-table-wrap { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.07); border-radius: 1rem; overflow: hidden; }
-  .doc-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
-  .doc-table th { text-align: left; color: rgba(255,255,255,0.22); font-size: 0.54rem; letter-spacing: 3px; text-transform: uppercase; padding: 0.65rem 1rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .doc-table td { padding: 0.52rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
-  .doc-table tr:last-child td { border-bottom: none; }
-  .doc-table td:first-child { font-family: 'Courier New', monospace; color: #ffdd57; font-size: 0.71rem; }
-  .doc-table td:nth-child(2) { color: rgba(255,255,255,0.28); font-size: 0.68rem; }
-  .doc-table td:last-child { color: var(--muted); font-size: 0.71rem; }
-
-  .resp-chips { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.5rem 0; }
-  .resp-chip { display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 0.6rem; padding: 0.42rem 0.9rem 0.42rem 0.45rem; font-size: 0.68rem; width: fit-content; font-family: 'Courier New', monospace; }
-  .resp-chip .chip-code { font-weight: 800; font-size: 0.64rem; padding: 0.1rem 0.42rem; border-radius: 4px; min-width: 1.8rem; text-align: center; }
-  .resp-chip.ok  { background: rgba(106,255,170,0.05); border: 1px solid rgba(106,255,170,0.12); color: rgba(255,255,255,0.55); }
-  .resp-chip.ok  .chip-code { background: rgba(106,255,170,0.14); color: #6affaa; }
-  .resp-chip.err { background: rgba(255,100,100,0.04); border: 1px solid rgba(255,100,100,0.1); color: rgba(255,255,255,0.45); }
-  .resp-chip.err .chip-code { background: rgba(255,100,100,0.14); color: #ffaaaa; }
-
-  /* ── INNER TAB BAR ── */
-  .itab-bar {
-    display: flex; gap: 0.28rem; margin-bottom: 1.3rem;
-    padding: 0.25rem; background: rgba(0,0,0,0.22);
-    border: 1px solid rgba(255,255,255,0.07); border-radius: 999px; width: fit-content;
-  }
-  .itab-btn {
-    background: none; border: none; border-radius: 999px; color: var(--muted);
-    font-family: 'DM Sans', sans-serif; font-size: 0.74rem; font-weight: 600;
-    padding: 0.36rem 1.1rem; cursor: pointer; transition: all 0.18s;
-  }
-  .itab-btn.active { background: white; color: var(--bg); }
-  .itab-btn:hover:not(.active) { color: rgba(255,255,255,0.75); }
-  .itab-panel { display: none; }
-  .itab-panel.active { display: block; }
-
-  /* ── STEP LIST ── */
-  .step-list { display: flex; flex-direction: column; }
-  .step-block { display: flex; gap: 1rem; padding-bottom: 1.6rem; position: relative; }
-  .step-block:not(:last-child)::before { content: ''; position: absolute; left: 0.87rem; top: 1.9rem; bottom: 0.4rem; width: 1px; background: linear-gradient(to bottom, rgba(255,255,255,0.08), transparent); }
-  .step-num { flex-shrink: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 0.67rem; font-weight: 700; color: rgba(255,255,255,0.38); }
-  .step-body { flex: 1; min-width: 0; padding-top: 0.15rem; }
-  .step-title { font-size: 0.84rem; font-weight: 700; margin-bottom: 0.4rem; }
-  .step-desc { font-size: 0.75rem; color: var(--muted); line-height: 1.8; }
-  .step-title code { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.09); border-radius: 4px; padding: 0.08rem 0.36rem; font-size: 0.71rem; color: rgba(255,255,255,0.82); font-family: 'Courier New', monospace; }
-
-  /* ── CODE BLOCK ── */
-  .code-block {
-    background: rgba(0,0,0,0.38); border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 0.9rem; padding: 2.2rem 1.1rem 0.95rem;
-    font-family: 'Courier New', monospace; font-size: 0.71rem;
-    line-height: 1.8; color: rgba(255,255,255,0.68);
-    margin: 0.65rem 0; position: relative; overflow-x: auto;
-  }
-  .code-block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1.9rem; background: rgba(255,255,255,0.025); border-bottom: 1px solid rgba(255,255,255,0.05); border-radius: 0.9rem 0.9rem 0 0; pointer-events: none; }
-  .code-block .copy-btn { position: absolute; top: 0.42rem; right: 0.65rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.11); border-radius: 999px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.6rem; font-weight: 600; padding: 0.18rem 0.6rem; cursor: pointer; transition: all 0.18s; z-index: 1; }
-  .code-block .copy-btn:hover { background: rgba(255,255,255,0.13); color: white; }
-  .ck { color: #7ec8e3; } .cv { color: #6affaa; } .cs { color: #ffb347; } .cc { color: rgba(255,255,255,0.25); }
-
-  .tip { border-radius: 0.65rem; padding: 0.55rem 0.85rem; font-size: 0.7rem; line-height: 1.75; margin-top: 0.6rem; }
-  .tip.yellow { background: rgba(255,221,87,0.04); border: 1px solid rgba(255,221,87,0.11); color: rgba(255,255,255,0.38); }
-  .tip.yellow code { color: #ffdd57; background: rgba(255,221,87,0.09); border-radius: 3px; padding: 0.04rem 0.28rem; font-family: 'Courier New', monospace; font-size: 0.67rem; }
-  .tip.green { background: rgba(106,255,170,0.03); border: 1px solid rgba(106,255,170,0.11); color: rgba(255,255,255,0.38); }
-  .tip.green code { color: #6affaa; background: rgba(106,255,170,0.09); border-radius: 3px; padding: 0.04rem 0.28rem; font-family: 'Courier New', monospace; font-size: 0.67rem; }
-
-  /* ── OVERLAY / MOBILE ── */
-  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
-  #overlay.open { display: block; }
-  #menuBtn { display: none; background: none; border: none; color: white; cursor: pointer; padding: 4px; }
-
-  @media (max-width: 640px) {
-    .sidebar { position: fixed; top: 46px; left: 0; height: calc(100% - 46px); z-index: 100; transform: translateX(-100%); }
-    .sidebar.open { transform: translateX(0); }
-    #menuBtn { display: block; }
-    .msg-content { max-width: 82%; }
-    .input-area { padding: 0.7rem 0.9rem 1rem; }
-    .chat-messages { padding: 1rem 0.9rem; }
-    .counters-row { grid-template-columns: 1fr; }
-    .input-toolbar { gap: 0.25rem; }
-  }
-
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-  .fi { opacity: 0; transform: translateY(12px); animation: fadeUp 0.4s ease forwards; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+.fi { opacity: 0; transform: translateY(12px); animation: fadeUp 0.4s ease forwards; }
 </style>
 </head>
 <body>
 
 <div id="overlay" onclick="closeSidebar()"></div>
 
-<!-- TOP NAV -->
 <nav class="top-nav">
   <button id="menuBtn" onclick="toggleSidebar()">
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 4.5h14M2 9h14M2 13.5h14" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
   </button>
   <a class="back-btn" href="../">
-    <svg viewBox="0 0 11 11" fill="none">
-      <path d="M7.5 1L2.5 5.5L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <svg viewBox="0 0 11 11" fill="none"><path d="M7.5 1L2.5 5.5L7.5 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Início
   </a>
   <span class="nav-title">Caos AI</span>
   <div class="nav-right">
-    <div class="model-badge">
-      <span class="dot-online"></span>
-      <span id="modelName">Carregando…</span>
-    </div>
+    <div class="model-badge"><span class="dot-online"></span><span id="modelName">Carregando…</span></div>
   </div>
 </nav>
 
 <div class="page-wrap">
-
-  <!-- TAB BAR -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('chat', this)">Chat</button>
     <button class="tab-btn" onclick="switchTab('painel', this)">Painel</button>
-    <button class="tab-btn" onclick="switchTab('tme', this)">TME</button>
-    <button class="tab-btn" onclick="switchTab('api', this)">API</button>
   </div>
 
-  <!-- ══════════════ TAB: CHAT ══════════════ -->
+  <!-- ══ TAB: CHAT ══ -->
   <div class="tab-panel active" id="tab-chat">
     <div class="chat-layout">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-label">Conversas</div>
         <button class="btn-new" onclick="newConversation()">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
-          </svg>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
           Nova conversa
         </button>
         <div class="conv-list" id="convList"></div>
@@ -564,12 +332,14 @@
             <p>Inicie uma conversa<br>ou selecione uma no painel lateral</p>
           </div>
         </div>
+
         <div class="input-area">
           <div class="input-wrap">
             <textarea id="msgInput" placeholder="Escreva sua mensagem…" rows="1"></textarea>
             <div class="input-toolbar">
-              <!-- Web search toggle -->
-              <button class="web-toggle" id="webToggle" onclick="toggleWeb()" title="Pesquisa na web">
+
+              <!-- Web Toggle -->
+              <button class="chip-base web-toggle" id="webToggle" onclick="toggleWeb()" title="Pesquisa na web via Mistral">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
                   <path d="M12 3c-2.5 3-4 5.7-4 9s1.5 6 4 9M12 3c2.5 3 4 5.7 4 9s-1.5 6-4 9M3 12h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -577,22 +347,24 @@
                 Web
               </button>
 
-              <!-- Divider -->
               <div class="toolbar-divider"></div>
 
-              <!-- Model selector chips -->
-              <button class="model-chip active-auto" id="chip-auto" onclick="selectModel('auto')" title="Automático · deixa a API decidir">
-                ✦ Auto
-              </button>
-              <button class="model-chip" id="chip-cerebras" onclick="selectModel('cerebras')" title="Cerebras · rápido">
-                ⚡ Cerebras
-              </button>
-              <button class="model-chip" id="chip-huggingface" onclick="selectModel('huggingface')" title="HuggingFace · fallback">
-                🤗 HuggingFace
-              </button>
-              <button class="model-chip" id="chip-mistral" onclick="selectModel('mistral')" title="Mistral · web search">
-                🌐 Mistral
-              </button>
+              <!-- Engine chips -->
+              <button class="chip-base engine-auto"     id="chip-auto"      onclick="selectEngine('auto')"      title="Auto — decide o melhor">✦ Auto</button>
+              <button class="chip-base engine-cerebras" id="chip-cerebras"  onclick="selectEngine('cerebras')"  title="Cerebras — padrão">⚡ Cerebras</button>
+              <button class="chip-base engine-hf"       id="chip-hf"        onclick="selectEngine('hf')"        title="HuggingFace — fallback">🤗 HF</button>
+              <button class="chip-base engine-mistral"  id="chip-mistral"   onclick="selectEngine('mistral')"   title="Mistral — web search">🌐 Mistral</button>
+
+              <!-- Model dropdown -->
+              <div class="model-select-wrap" id="modelSelectWrap" style="display:none">
+                <select id="modelSelect" onchange="onModelChange()" title="Selecione o modelo"></select>
+              </div>
+
+              <div class="toolbar-divider" id="eiDivider" style="display:none"></div>
+              <span id="engineIndicator">
+                <span class="ei-dot" id="eiDot"></span>
+                <span id="eiLabel"></span>
+              </span>
             </div>
           </div>
           <button class="btn-send" id="sendBtn" onclick="send()">Enviar</button>
@@ -601,92 +373,76 @@
     </div>
   </div>
 
-  <!-- ══════════════ TAB: PAINEL ══════════════ -->
+  <!-- ══ TAB: PAINEL ══ -->
   <div class="tab-panel" id="tab-painel">
     <div class="panel-wrap">
 
       <div class="fb-banner" id="fbBanner">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
-          <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span id="fbBannerText">Conectando ao Firebase…</span>
       </div>
 
-      <div class="panel-section-title">Uso diário — modelos</div>
+      <div class="panel-section-title">Cerebras — tokens diários</div>
       <div class="counters-row">
         <div class="counter-box">
-          <div class="counter-title">Cerebras · hoje · global</div>
+          <div class="counter-title">Tokens usados hoje (global)</div>
           <div class="counter-value" id="ct-cb">—</div>
-          <div class="counter-sub" id="ct-cb-sub">de 800 disponíveis hoje</div>
-          <div class="counter-status">
-            <div class="dot offline" id="dot-cb"></div>
-            <span id="lbl-cb">Aguardando…</span>
-          </div>
+          <div class="counter-sub" id="ct-cb-sub">de 800 000 tokens</div>
+          <div class="counter-status"><div class="dot offline" id="dot-cb"></div><span id="lbl-cb">Aguardando…</span></div>
         </div>
         <div class="counter-box">
-          <div class="counter-title">HuggingFace · hoje · global</div>
-          <div class="counter-value" id="ct-hf">—</div>
-          <div class="counter-sub" id="ct-hf-sub">de 200 disponíveis hoje</div>
-          <div class="counter-status">
-            <div class="dot offline" id="dot-hf"></div>
-            <span id="lbl-hf">Aguardando…</span>
-          </div>
+          <div class="counter-title">Modelos disponíveis</div>
+          <div class="counter-value" style="font-size:1.6rem; letter-spacing:-1px; line-height:1.3">2</div>
+          <div class="counter-sub">Llama 3.1 8B · Qwen 3 235B</div>
+          <div class="counter-status"><div class="dot online"></div><span>Padrão: Llama 3.1 8B</span></div>
         </div>
       </div>
 
-      <div class="panel-section-title">Web search — Mistral</div>
+      <div class="panel-section-title">HuggingFace — mensagens diárias</div>
       <div class="counters-row">
         <div class="counter-box">
-          <div class="counter-title">Mistral · janela de 4 horas</div>
-          <div class="counter-value" id="ct-ms">—</div>
-          <div class="counter-sub" id="ct-ms-sub">de 30 disponíveis na janela</div>
-          <div class="counter-status">
-            <div class="dot offline" id="dot-ms"></div>
-            <span id="lbl-ms">Aguardando…</span>
-          </div>
+          <div class="counter-title">Mensagens usadas hoje</div>
+          <div class="counter-value" id="ct-hf">—</div>
+          <div class="counter-sub" id="ct-hf-sub">de 100 mensagens/dia</div>
+          <div class="counter-status"><div class="dot offline" id="dot-hf"></div><span id="lbl-hf">Aguardando…</span></div>
         </div>
         <div class="counter-box">
-          <div class="counter-title">Mensagens · sessão atual</div>
+          <div class="counter-title">Uso do dia</div>
+          <div class="counter-value" id="ct-hf-pct" style="font-size:2.2rem; letter-spacing:-1px">—</div>
+          <div class="counter-sub">% do limite diário</div>
+          <div class="counter-status"><div class="dot online"></div><span>Reseta à meia-noite UTC</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section-title">Mistral (web search) — janela 4h</div>
+      <div class="counters-row">
+        <div class="counter-box">
+          <div class="counter-title">Requisições nesta janela</div>
+          <div class="counter-value" id="ct-ms">—</div>
+          <div class="counter-sub" id="ct-ms-sub">de 30 disponíveis / 4h</div>
+          <div class="counter-status"><div class="dot offline" id="dot-ms"></div><span id="lbl-ms">Aguardando…</span></div>
+        </div>
+        <div class="counter-box">
+          <div class="counter-title">Modelos disponíveis</div>
+          <div class="counter-value" style="font-size:1.6rem; letter-spacing:-1px; line-height:1.3">7</div>
+          <div class="counter-sub">Small · Large · Medium · Codestral · Devstral · +2</div>
+          <div class="counter-status"><div class="dot online"></div><span>Padrão: Mistral Small</span></div>
+        </div>
+      </div>
+
+      <div class="panel-section-title">Sessão atual</div>
+      <div class="counters-row">
+        <div class="counter-box">
+          <div class="counter-title">Mensagens desta sessão</div>
           <div class="counter-value" id="ct-msgs">0</div>
           <div class="counter-sub">desde que abriu o app</div>
-          <div class="counter-status">
-            <div class="dot online"></div>
-            <span>Local · sem limite</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel-section-title">Limites ativos</div>
-      <div class="counters-row">
-        <div class="counter-box">
-          <div class="counter-title">Por IP · por minuto</div>
-          <div class="counter-value" style="font-size:2rem">20</div>
-          <div class="counter-sub">requisições / minuto por IP</div>
-          <div class="counter-status">
-            <div class="dot online"></div>
-            <span>Firestore · janela deslizante</span>
-          </div>
+          <div class="counter-status"><div class="dot online"></div><span>Local · sem limite</span></div>
         </div>
         <div class="counter-box">
-          <div class="counter-title">Prioridade de modelos</div>
-          <div style="margin-top:0.5rem;display:flex;flex-direction:column;gap:0.4rem">
-            <div style="font-size:0.71rem;display:flex;align-items:center;gap:0.45rem">
-              <span style="width:7px;height:7px;border-radius:2px;background:rgba(255,200,100,0.7);flex-shrink:0;display:inline-block"></span>
-              <span style="color:rgba(255,200,100,0.8);font-weight:700">1.</span>
-              <span style="color:var(--muted)">Cerebras · 800/dia</span>
-            </div>
-            <div style="font-size:0.71rem;display:flex;align-items:center;gap:0.45rem">
-              <span style="width:7px;height:7px;border-radius:2px;background:rgba(180,180,255,0.7);flex-shrink:0;display:inline-block"></span>
-              <span style="color:rgba(180,180,255,0.8);font-weight:700">2.</span>
-              <span style="color:var(--muted)">HuggingFace · 200/dia (fallback)</span>
-            </div>
-            <div style="font-size:0.71rem;display:flex;align-items:center;gap:0.45rem">
-              <span style="width:7px;height:7px;border-radius:2px;background:rgba(106,255,170,0.7);flex-shrink:0;display:inline-block"></span>
-              <span style="color:rgba(106,255,170,0.8);font-weight:700">W.</span>
-              <span style="color:var(--muted)">Mistral · 30/4h (web search)</span>
-            </div>
-          </div>
+          <div class="counter-title">Limite por IP</div>
+          <div class="counter-value" style="font-size:2.8rem; letter-spacing:-1px">20</div>
+          <div class="counter-sub">requisições / minuto</div>
+          <div class="counter-status"><div class="dot online"></div><span>Firestore · janela deslizante</span></div>
         </div>
       </div>
 
@@ -699,282 +455,218 @@
         </div>
       </div>
 
-      <p class="panel-note" id="panel-note">
-        Cerebras: 800/dia · HuggingFace: 200/dia (fallback) · Mistral: 30/4h (web search). Reseta à meia-noite UTC.
+      <p class="panel-note">
+        Cerebras: 800 000 tokens/dia (2 modelos disponíveis) · HuggingFace: 100 mensagens/dia · Mistral: 30 req/4h (5 modelos).<br>
+        Cerebras é o engine padrão. HuggingFace é o fallback automático quando Cerebras atinge o limite.<br>
+        Sumarização automática do histórico a cada 1 000 tokens para manter contexto.
       </p>
-    </div>
-  </div>
-
-  <!-- ══════════════ TAB: TME ══════════════ -->
-  <div class="tab-panel" id="tab-tme">
-    <div class="doc-wrap fi">
-      <div class="doc-hero doc-hero-tme">
-        <div class="doc-badge doc-badge-tme">TME</div>
-        <div class="doc-title">Caos AI — TME Architecture</div>
-        <p class="doc-desc"><strong>Transparent Multi-Mode Execution</strong> — uma página HTML estática age como intermediária. Ela lê a mensagem da query string, chama a IA e retorna a resposta no hash da URL para o WebViewer do Kodular. Sem backend próprio.</p>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Parâmetros da URL</div>
-        <div class="doc-table-wrap"><table class="doc-table">
-          <thead><tr><th>Parâmetro</th><th>Req.</th><th>Descrição</th></tr></thead>
-          <tbody>
-            <tr><td>message</td><td style="color:#6affaa">✓</td><td>Mensagem do usuário para a IA</td></tr>
-            <tr><td>system</td><td style="color:rgba(255,255,255,0.25)">—</td><td>System prompt customizado (opcional)</td></tr>
-            <tr><td>model</td><td style="color:rgba(255,255,255,0.25)">—</td><td>Forçar engine: cerebras | huggingface | mistral</td></tr>
-          </tbody>
-        </table></div>
-        <p class="step-desc" style="margin-top:0.8rem">A URL base é <code>mesinhas.vercel.app/caos/tme/</code>. Use <code>UriEncode</code> em cada valor antes de concatenar.</p>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Resposta via hash da URL</div>
-        <p class="step-desc" style="margin-bottom:0.8rem">A página grava o resultado em <code>window.location.hash</code>. Leia via <code>WebViewerTME.CurrentUrl</code> no evento <code>PageLoaded</code>.</p>
-        <div class="resp-chips">
-          <div class="resp-chip ok"><span class="chip-code">✓</span>#result=success&amp;reply=Resposta+da+IA&amp;model=id</div>
-          <div class="resp-chip err"><span class="chip-code">✗</span>#result=error&amp;msg=Motivo+do+erro</div>
-        </div>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Guia de integração — Kodular</div>
-        <div class="step-list">
-          <div class="step-block">
-            <div class="step-num">1</div>
-            <div class="step-body">
-              <div class="step-title">Adicione um WebViewer invisível</div>
-              <p class="step-desc">Arraste um <strong>WebViewer</strong> para a tela. Defina <strong>Visible → false</strong>. Nomeie <code>WebViewerTME</code>.</p>
-            </div>
-          </div>
-          <div class="step-block">
-            <div class="step-num">2</div>
-            <div class="step-body">
-              <div class="step-title">Variável de controle</div>
-              <p class="step-desc">Crie uma global booleana <code>tme_aguardando</code> iniciando em <strong>false</strong> para evitar falsos positivos no <code>PageLoaded</code>.</p>
-            </div>
-          </div>
-          <div class="step-block">
-            <div class="step-num">3</div>
-            <div class="step-body">
-              <div class="step-title">Monte a URL e abra</div>
-              <p class="step-desc">Use <code>Web.UriEncode</code> no valor de <code>message</code> antes de concatenar. Marque <code>tme_aguardando = true</code> e chame <code>GoToUrl</code>.</p>
-              <div class="tip yellow">⚠ Nunca concatene texto com acentos, espaços ou <code>&amp;</code> sem encodar — quebrará o parâmetro.</div>
-            </div>
-          </div>
-          <div class="step-block">
-            <div class="step-num">4</div>
-            <div class="step-body">
-              <div class="step-title">Leia o resultado em PageLoaded</div>
-              <p class="step-desc">Verifique <code>tme_aguardando</code>. Leia <code>CurrentUrl</code>, separe com <code>#</code> (pos. 2). Se contiver <code>result=success</code> extraia <code>reply=</code> e decodifique com <code>Web.UriDecode</code>. Marque <code>tme_aguardando = false</code>.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ TAB: API ══════════════ -->
-  <div class="tab-panel" id="tab-api">
-    <div class="doc-wrap fi">
-      <div class="doc-hero doc-hero-api">
-        <div class="doc-badge doc-badge-api">API</div>
-        <div class="doc-title">Caos AI — API</div>
-        <p class="doc-desc"><strong>POST</strong> para <code>https://mesinhasserver.vercel.app/api/chat</code> — envia uma mensagem para a IA e recebe a resposta em JSON. Limite de <strong>20 requisições / minuto</strong> por IP e <strong>200 / dia</strong> global. CORS habilitado para qualquer origem.</p>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Endpoint</div>
-        <div class="doc-table-wrap"><table class="doc-table">
-          <thead><tr><th>Método</th><th>URL</th><th>Content-Type</th></tr></thead>
-          <tbody>
-            <tr><td>POST</td><td style="color:rgba(255,255,255,0.7);font-family:'Courier New',monospace;font-size:0.7rem">mesinhasserver.vercel.app/api/chat</td><td>application/json</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Body (JSON)</div>
-        <div class="doc-table-wrap"><table class="doc-table">
-          <thead><tr><th>Campo</th><th>Req.</th><th>Descrição</th></tr></thead>
-          <tbody>
-            <tr><td>message</td><td style="color:#6affaa">✓</td><td>Mensagem do usuário para a IA</td></tr>
-            <tr><td>system</td><td style="color:rgba(255,255,255,0.25)">—</td><td>System prompt customizado (opcional)</td></tr>
-            <tr><td>forceEngine</td><td style="color:rgba(255,255,255,0.25)">—</td><td>Forçar engine: <code>cerebras</code> | <code>huggingface</code> | <code>mistral</code></td></tr>
-            <tr><td>webSearch</td><td style="color:rgba(255,255,255,0.25)">—</td><td>Forçar web search via Mistral (boolean)</td></tr>
-          </tbody>
-        </table></div>
-        <p class="step-desc" style="margin-top:0.8rem">O campo <code>message</code> com valor <code>__model_info__</code> retorna o nome do modelo e o uso diário sem chamar a IA — não conta no limite.</p>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Respostas</div>
-        <div class="resp-chips">
-          <div class="resp-chip ok"><span class="chip-code">200</span>{ "reply": "Resposta da IA", "model": "...", "engine": "cerebras" }</div>
-          <div class="resp-chip err"><span class="chip-code">400</span>{ "reply": "Mensagem inválida", "model": "..." }</div>
-          <div class="resp-chip err"><span class="chip-code">429</span>{ "reply": "⚠️ Limite atingido. Aguarde 1 minuto.", "model": "..." }</div>
-          <div class="resp-chip err"><span class="chip-code">500</span>{ "reply": "❌ Erro interno da API", "model": "..." }</div>
-        </div>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Exemplo de integração</div>
-        <div class="itab-bar">
-          <button class="itab-btn active" onclick="switchITab('api-js', this)">HTML + JS</button>
-          <button class="itab-btn" onclick="switchITab('api-kodular', this)">Kodular</button>
-        </div>
-        <div class="itab-panel active" id="itab-api-js">
-          <div class="step-list">
-            <div class="step-block">
-              <div class="step-num">1</div>
-              <div class="step-body">
-                <div class="step-title">Função base</div>
-                <p class="step-desc">Retorna uma <strong>Promise</strong> com a resposta da IA.</p>
-                <div class="code-block">
-                  <button class="copy-btn" onclick="copyCode('code-js-1')">copiar</button>
-                  <pre id="code-js-1" style="white-space:pre-wrap"><span class="ck">const</span> API_URL = <span class="cs">"https://mesinhasserver.vercel.app/api/chat"</span>;
-
-<span class="ck">async function</span> <span class="cv">askAI</span>(message, system = <span class="cs">""</span>, forceEngine = <span class="ck">null</span>) {
-  <span class="ck">const</span> res = <span class="ck">await</span> fetch(API_URL, {
-    method:  <span class="cs">'POST'</span>,
-    headers: { <span class="cs">'Content-Type'</span>: <span class="cs">'application/json'</span> },
-    body:    JSON.stringify({ message, system, forceEngine })
-  });
-  <span class="ck">const</span> data = <span class="ck">await</span> res.json();
-  <span class="ck">if</span> (res.status === 429) <span class="ck">throw new</span> Error(<span class="cs">'Limite atingido'</span>);
-  <span class="ck">if</span> (!res.ok) <span class="ck">throw new</span> Error(data.reply || <span class="cs">'Erro desconhecido'</span>);
-  <span class="ck">return</span> data; <span class="cc">// { reply, model, engine }</span>
-}</pre>
-                </div>
-              </div>
-            </div>
-            <div class="step-block">
-              <div class="step-num">2</div>
-              <div class="step-body">
-                <div class="step-title">Chamada no clique do botão</div>
-                <div class="code-block">
-                  <button class="copy-btn" onclick="copyCode('code-js-2')">copiar</button>
-                  <pre id="code-js-2" style="white-space:pre-wrap">btn.addEventListener(<span class="cs">'click'</span>, <span class="ck">async</span> () => {
-  btn.disabled = <span class="ck">true</span>;
-  <span class="ck">try</span> {
-    <span class="ck">const</span> { reply, model, engine } = <span class="ck">await</span> <span class="cv">askAI</span>(
-      inputEl.value,
-      <span class="cs">""</span>,
-      <span class="cs">"cerebras"</span> <span class="cc">// ou "huggingface" / "mistral" / null (auto)</span>
-    );
-    outputEl.textContent = reply;
-  } <span class="ck">catch</span>(e) {
-    outputEl.textContent = <span class="cs">'Erro: '</span> + e.message;
-  } <span class="ck">finally</span> {
-    btn.disabled = <span class="ck">false</span>;
-  }
-});</pre>
-                </div>
-                <div class="tip green">✓ Passe <code>forceEngine: null</code> para deixar a API escolher automaticamente.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="itab-panel" id="itab-api-kodular">
-          <div class="step-list">
-            <div class="step-block">
-              <div class="step-num">1</div>
-              <div class="step-body">
-                <div class="step-title">Configure o componente <code>Web</code></div>
-                <p class="step-desc">Arraste um <strong>Web</strong> invisível e nomeie <code>WebIA</code>. Defina o header <code>Content-Type: application/json</code>. URL: <code>https://mesinhasserver.vercel.app/api/chat</code>.</p>
-              </div>
-            </div>
-            <div class="step-block">
-              <div class="step-num">2</div>
-              <div class="step-body">
-                <div class="step-title">Monte o JSON e envie</div>
-                <p class="step-desc">Use <strong>Text → join</strong> para montar a string JSON. Inclua o campo <code>forceEngine</code> com o valor desejado (<code>cerebras</code>, <code>huggingface</code> ou <code>mistral</code>). Desabilite o botão antes de chamar <code>WebIA.PostText</code>.</p>
-                <div class="tip yellow">⚠ Exemplo: <code>{"message":"OLÁ","forceEngine":"cerebras"}</code></div>
-              </div>
-            </div>
-            <div class="step-block">
-              <div class="step-num">3</div>
-              <div class="step-body">
-                <div class="step-title">Leia a resposta em <code>GotText</code></div>
-                <p class="step-desc">Em <code>WebIA.GotText</code>, cheque <code>responseCode = 200</code>. Para extrair: <code>segment(responseContent, "reply\":\"", 2)</code> → <code>segment(resultado, "\"", 1)</code>.</p>
-                <div class="tip yellow">💡 Se <code>responseCode = 429</code>, mostre "aguarde 1 minuto" antes de reabilitar.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="doc-section">
-        <div class="doc-section-title">Limites e boas práticas</div>
-        <div class="doc-table-wrap"><table class="doc-table">
-          <thead><tr><th>Regra</th><th>Valor</th><th>Observação</th></tr></thead>
-          <tbody>
-            <tr><td>Rate limit · IP</td><td style="color:#ffaaaa">20 / min</td><td>Por IP · janela deslizante de 60s</td></tr>
-            <tr><td>Rate limit · global</td><td style="color:#ffaaaa">200 / dia</td><td>Todos os usuários · reseta à meia-noite UTC</td></tr>
-            <tr><td>max_tokens</td><td style="color:rgba(255,255,255,0.6)">1024</td><td>Cerebras · respostas longas suportadas</td></tr>
-            <tr><td>CORS</td><td style="color:#6affaa">*</td><td>Qualquer origem permitida</td></tr>
-            <tr><td>__model_info__</td><td style="color:#7ec8e3">gratuito</td><td>Não conta no limite · retorna dailyUsed</td></tr>
-            <tr><td>forceEngine</td><td style="color:#7ec8e3">opcional</td><td>cerebras | huggingface | mistral</td></tr>
-          </tbody>
-        </table></div>
-      </div>
     </div>
   </div>
 
 </div><!-- .page-wrap -->
 
 <script>
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
 const API_URL     = "https://mesinhasserver.vercel.app/api/chat";
-const STORAGE_KEY = "caosai_conversations";
+const STORAGE_KEY = "caosai_conversations_v2";
 
-const LIM_CB = 800;
-const LIM_HF = 200;
-const LIM_MS = 30;
-const WIN_4H = 4 * 3_600_000;
+// Sumarização — aumentado para 1000 tokens
+const SUMMARY_TOKEN_LIMIT = 1000;
+const SUMMARY_KEEP_RECENT = 4;
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════════════════
 let conversations  = [];
 let currentId      = null;
 let sessionMsgs    = 0;
 let db             = null;
 let webSearchOn    = false;
-let selectedEngine = null; // null = auto, 'cerebras', 'huggingface', 'mistral'
+let selectedEngine = null;   // null=auto | 'cerebras' | 'hf' | 'mistral'
+let selectedModel  = null;
 
-/* ══════════════════════════════════════════
-   MODEL CHIP SELECTOR
-══════════════════════════════════════════ */
-const ENGINES = {
-  auto:        { cls: 'active-auto',        label: '✦ Auto' },
-  cerebras:    { cls: 'active-cerebras',    label: '⚡ Cerebras' },
-  huggingface: { cls: 'active-huggingface', label: '🤗 HuggingFace' },
-  mistral:     { cls: 'active-mistral',     label: '🌐 Mistral' }
+// Catálogos
+let CATALOGS = {
+  cerebras: [
+    { id: "llama3.1-8b",                    label: "Llama 3.1 8B ⚡ (padrão)" },
+    { id: "qwen-3-235b-a22b-instruct-2507", label: "Qwen 3 235B Instruct" },
+  ],
+  hf: [
+    { id: "meta-llama/Llama-3.1-8B-Instruct",        label: "Llama 3.1 8B (padrão)" },
+    { id: "meta-llama/Llama-3.3-70B-Instruct",       label: "Llama 3.3 70B" },
+    { id: "Qwen/Qwen3-8B",                           label: "Qwen3 8B" },
+    { id: "Qwen/Qwen2.5-72B-Instruct",               label: "Qwen2.5 72B" },
+    { id: "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", label: "DeepSeek R1 7B" },
+  ],
+  mistral: [
+    { id: "mistral-small-latest",    label: "Mistral Small (padrão)" },
+    { id: "mistral-large-latest",    label: "Mistral Large" },
+    { id: "mistral-medium-latest",   label: "Mistral Medium" },
+    { id: "codestral-latest",        label: "Codestral (código)" },
+    { id: "devstral-small-latest",   label: "Devstral Small (agente)" },
+    { id: "open-mistral-nemo",       label: "Mistral NeMo (open)" },
+    { id: "open-mixtral-8x22b",      label: "Mixtral 8×22B (open)" },
+  ]
 };
 
-function selectModel(engine) {
+// ═══════════════════════════════════════════════════════════════════════════
+//  TOKEN ESTIMATION
+// ═══════════════════════════════════════════════════════════════════════════
+function estimateTokens(text) { return Math.ceil((text || '').length / 4); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SUMARIZAÇÃO (limite: 1000 tokens)
+// ═══════════════════════════════════════════════════════════════════════════
+async function maybeSummarize(conv) {
+  const startIdx   = conv.summaryIndex || 0;
+  const recentMsgs = conv.messages.slice(startIdx);
+  let totalText    = (conv.summary || '') + ' ';
+  recentMsgs.forEach(m => { totalText += m.text + ' '; });
+  if (estimateTokens(totalText) <= SUMMARY_TOKEN_LIMIT) return;
+
+  const toSummarize = recentMsgs.slice(0, Math.max(0, recentMsgs.length - SUMMARY_KEEP_RECENT));
+  if (toSummarize.length < 2) return;
+
+  const notice = appendSummarizeNotice();
+  const parts  = [];
+  if (conv.summary) parts.push(`Resumo anterior:\n${conv.summary}`);
+  parts.push(`Novas mensagens:\n` + toSummarize.map(m => `${m.role === 'user' ? 'Usuário' : 'IA'}: ${m.text}`).join('\n'));
+
+  try {
+    const res  = await fetch(API_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: parts.join('\n\n'), system: 'Resuma a conversa de forma fiel e concisa. Responda APENAS com o resumo.' })
+    });
+    const data = await res.json();
+    if (data.reply && data.reply.length > 10) {
+      conv.summary = data.reply; conv.summaryIndex = startIdx + toSummarize.length; saveAll();
+    }
+  } catch(e) { console.warn('Erro ao resumir:', e); }
+  finally    { notice?.remove(); }
+}
+
+function appendSummarizeNotice() {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.className = 'summarize-notice';
+  el.innerHTML = '<span class="dot-spin"></span> Resumindo histórico…';
+  chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
+  return el;
+}
+
+function buildHistory(conv) {
+  const startIdx   = conv.summaryIndex || 0;
+  const recentMsgs = conv.messages.slice(startIdx, -1);
+  const history    = [];
+  if (conv.summary) {
+    history.push({ role: 'user',      content: `[Contexto resumido]\n${conv.summary}` });
+    history.push({ role: 'assistant', content: 'Entendido. Continuarei com base nesse contexto.' });
+  }
+  recentMsgs.forEach(m => history.push({ role: m.role === 'user' ? 'user' : 'assistant', content: m.text }));
+  return history;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  ENGINE / MODEL SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+const ENGINE_META = {
+  auto:     { cls: 'engine-auto',     label: '✦ Auto',      dotColor: 'rgba(255,255,255,0.5)', catalog: null },
+  cerebras: { cls: 'engine-cerebras', label: '⚡ Cerebras',  dotColor: '#ffc864',              catalog: 'cerebras' },
+  hf:       { cls: 'engine-hf',       label: '🤗 HF',        dotColor: '#b4b4ff',              catalog: 'hf' },
+  mistral:  { cls: 'engine-mistral',  label: '🌐 Mistral',   dotColor: '#6affaa',              catalog: 'mistral' },
+};
+
+function selectEngine(engine) {
   selectedEngine = engine === 'auto' ? null : engine;
+  selectedModel  = null;
 
-  // Clear all active states
-  document.querySelectorAll('.model-chip').forEach(c => {
-    c.classList.remove('active-auto','active-cerebras','active-huggingface','active-mistral');
+  ['auto','cerebras','hf','mistral'].forEach(e => {
+    document.getElementById('chip-' + e).classList.remove('active');
   });
+  document.getElementById('chip-' + engine).classList.add('active');
 
-  // Apply active state to selected chip
-  document.getElementById('chip-' + engine).classList.add(ENGINES[engine].cls);
-
-  // Sync web toggle: only mistral enables it
   if (engine === 'mistral') {
     webSearchOn = true;
     document.getElementById('webToggle').classList.add('active');
-  } else {
+  } else if (engine === 'auto') {
     webSearchOn = false;
     document.getElementById('webToggle').classList.remove('active');
   }
 
-  updateNavBadge(engine === 'auto' ? null : engine);
+  const wrap    = document.getElementById('modelSelectWrap');
+  const catalog = ENGINE_META[engine]?.catalog;
+  if (catalog && CATALOGS[catalog]) {
+    populateModelSelect(CATALOGS[catalog]);
+    wrap.style.display = 'inline-flex';
+  } else {
+    wrap.style.display = 'none';
+  }
+
+  updateNavBadge();
+  updateEngineIndicator(engine);
 }
 
-function updateNavBadge(engine) {
+function populateModelSelect(models) {
+  const sel = document.getElementById('modelSelect');
+  sel.innerHTML = '';
+  models.forEach((m, i) => {
+    const opt    = document.createElement('option');
+    opt.value    = m.id;
+    opt.textContent = m.label;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  selectedModel = sel.value;
+}
+
+function onModelChange() {
+  selectedModel = document.getElementById('modelSelect').value;
+  updateNavBadge();
+}
+
+function updateNavBadge() {
   const badge = document.getElementById('modelName');
-  if (!engine) {
-    badge.textContent = '⚡ Auto';
+  if (!selectedEngine) { badge.textContent = '✦ Auto'; return; }
+  const meta  = ENGINE_META[selectedEngine];
+  const sel   = document.getElementById('modelSelect');
+  const label = sel?.selectedOptions?.[0]?.textContent || meta.label;
+  badge.textContent = meta.label + ' · ' + label.split(' ').slice(0, 3).join(' ');
+}
+
+function updateEngineIndicator(engine) {
+  const indicator = document.getElementById('engineIndicator');
+  const divider   = document.getElementById('eiDivider');
+  const dot       = document.getElementById('eiDot');
+  const label     = document.getElementById('eiLabel');
+  if (!engine || engine === 'auto') {
+    indicator.classList.remove('visible');
+    divider.style.display = 'none';
     return;
   }
-  badge.textContent = ENGINES[engine].label;
+  dot.style.background = ENGINE_META[engine].dotColor;
+  label.textContent    = 'forçando ' + engine;
+  indicator.classList.add('visible');
+  divider.style.display = 'block';
 }
 
-/* ══════════════════════════════════════════
-   FIREBASE — init + painel
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  WEB TOGGLE
+// ═══════════════════════════════════════════════════════════════════════════
+function toggleWeb() {
+  webSearchOn = !webSearchOn;
+  document.getElementById('webToggle').classList.toggle('active', webSearchOn);
+  if (webSearchOn && selectedEngine !== 'mistral') {
+    selectEngine('mistral');
+  } else if (!webSearchOn && selectedEngine === 'mistral') {
+    selectEngine('auto');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  FIREBASE
+// ═══════════════════════════════════════════════════════════════════════════
 function initFirebase() {
   try {
     if (!firebase.apps.length) {
@@ -992,10 +684,7 @@ function initFirebase() {
     db.collection("chat").doc("limits").get()
       .then(() => setFbBanner('ok'))
       .catch(() => setFbBanner('error'));
-  } catch(e) {
-    console.error("Firebase init:", e);
-    setFbBanner('error');
-  }
+  } catch(e) { console.error("Firebase:", e); setFbBanner('error'); }
 }
 
 function setFbBanner(state) {
@@ -1016,10 +705,7 @@ function setFbBanner(state) {
 
 function dayKey() {
   const d = new Date();
-  return "d"
-    + String(d.getUTCDate()).padStart(2,"0")
-    + String(d.getUTCMonth()+1).padStart(2,"0")
-    + d.getUTCFullYear();
+  return `d${String(d.getUTCDate()).padStart(2,"0")}${String(d.getUTCMonth()+1).padStart(2,"0")}${d.getUTCFullYear()}`;
 }
 
 async function loadPainel() {
@@ -1028,21 +714,32 @@ async function loadPainel() {
   try {
     const snap = await db.collection("chat").doc("limits").get();
     const d    = snap.exists ? snap.data() : {};
-    const dk   = dayKey();
+    const now  = Date.now();
 
-    const cbUsed = d[`cb_${dk}`]  || 0;
-    const hfUsed = d[`hf_${dk}`]  || 0;
-    const msUsed = d.ms_win_count || 0;
-    const msWin  = d.ms_win_start || 0;
+    // Cerebras — tokens
+    const cbUsed = d[`cb_tokens_${dayKey()}`] || 0;
+    updateTokenCounter("ct-cb","dot-cb","lbl-cb","ct-cb-sub", cbUsed, 800_000);
 
-    updateCounter("ct-cb","dot-cb","lbl-cb","ct-cb-sub", cbUsed, LIM_CB, "dia");
-    updateCounter("ct-hf","dot-hf","lbl-hf","ct-hf-sub", hfUsed, LIM_HF, "dia");
+    // HuggingFace — mensagens diárias
+    const hfUsed = d[`hf_msgs_${dayKey()}`] || 0;
+    const hfMax  = 100;
+    const hfPct  = Math.min(Math.round((hfUsed / hfMax) * 100), 100);
+    const hfEl   = document.getElementById("ct-hf");
+    hfEl.textContent = hfUsed;
+    hfEl.className   = "counter-value" + (hfPct >= 100 ? " limit" : hfPct >= 75 ? " warning" : "");
+    document.getElementById("dot-hf").className = "dot online";
+    document.getElementById("lbl-hf").textContent = hfPct >= 100 ? "Limite diário atingido" : `Firebase · ${hfPct}% usado`;
+    document.getElementById("ct-hf-sub").textContent = `de ${hfMax} mensagens/dia (reseta à meia-noite UTC)`;
+    const pctEl = document.getElementById("ct-hf-pct");
+    if (pctEl) { pctEl.textContent = hfPct + '%'; pctEl.className = "counter-value" + (hfPct >= 100 ? " limit" : hfPct >= 75 ? " warning" : ""); }
 
-    const now      = Date.now();
-    const msActive = (now - msWin) < WIN_4H;
-    updateCounter("ct-ms","dot-ms","lbl-ms","ct-ms-sub", msActive ? msUsed : 0, LIM_MS, "4h");
-    if (msActive && msUsed >= LIM_MS) {
-      const mins = Math.ceil((WIN_4H - (now - msWin)) / 60000);
+    // Mistral
+    const msWin   = d.ms_win_start || 0;
+    const msUsed  = d.ms_win_count || 0;
+    const msActive = (now - msWin) < 4 * 3_600_000;
+    updateCounter("ct-ms","dot-ms","lbl-ms","ct-ms-sub", msActive ? msUsed : 0, 30, "4h");
+    if (msActive && msUsed >= 30) {
+      const mins = Math.ceil((4 * 3_600_000 - (now - msWin)) / 60000);
       document.getElementById("lbl-ms").textContent = `Limite atingido — libera em ~${mins} min`;
     }
 
@@ -1060,55 +757,41 @@ function setAllCountersOffline() {
   ['lbl-cb','lbl-hf','lbl-ms'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'Sem conexão'; });
 }
 
+function updateTokenCounter(valId, dotId, lblId, subId, used, max) {
+  const pct = Math.min((used / max) * 100, 100);
+  const el  = document.getElementById(valId);
+  el.textContent = used >= 1000 ? (used / 1000).toFixed(1) + 'k' : used;
+  el.className   = "counter-value" + (pct >= 100 ? " limit" : pct >= 75 ? " warning" : "");
+  document.getElementById(dotId).className = "dot online";
+  document.getElementById(lblId).textContent = pct >= 100 ? `Limite atingido · reseta à meia-noite UTC` : `Firebase · ${Math.round(pct)}% usado`;
+  document.getElementById(subId).textContent = `${used.toLocaleString('pt-BR')} de ${max.toLocaleString('pt-BR')} tokens usados hoje`;
+}
+
 function updateCounter(valId, dotId, lblId, subId, used, max, period) {
   const pct = Math.min((used / max) * 100, 100);
   const el  = document.getElementById(valId);
   el.textContent = used;
   el.className   = "counter-value" + (pct >= 100 ? " limit" : pct >= 75 ? " warning" : "");
   document.getElementById(dotId).className = "dot online";
-  document.getElementById(lblId).textContent = pct >= 100
-    ? `Limite atingido · reseta (${period})`
-    : `Firebase · ${Math.round(pct)}% usado`;
-  document.getElementById(subId).textContent = `de ${max} disponíveis (${period})`;
+  document.getElementById(lblId).textContent = pct >= 100 ? `Limite atingido (${period})` : `Firebase · ${Math.round(pct)}% usado`;
+  document.getElementById(subId).textContent = `de ${max} disponíveis / ${period}`;
 }
 
-/* ══════════════════════════════════════════
-   WEB TOGGLE
-══════════════════════════════════════════ */
-function toggleWeb() {
-  webSearchOn = !webSearchOn;
-  document.getElementById("webToggle").classList.toggle("active", webSearchOn);
-
-  // If enabling web, force mistral chip active
-  if (webSearchOn) {
-    selectedEngine = 'mistral';
-    document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active-cerebras','active-huggingface','active-mistral'));
-    document.getElementById('chip-mistral').classList.add('active-mistral');
-    updateNavBadge('mistral');
-  } else {
-    // Revert to auto
-    selectedEngine = null;
-    document.querySelectorAll('.model-chip').forEach(c => c.classList.remove('active-auto','active-cerebras','active-huggingface','active-mistral'));
-    document.getElementById('chip-auto').classList.add('active-auto');
-    updateNavBadge(null);
-  }
-}
-
-/* ══════════════════════════════════════════
-   STORAGE
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════════════════════════════════
 function saveAll() { localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations)); }
 function loadAll() {
   try { conversations = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
   catch { conversations = []; }
 }
 
-/* ══════════════════════════════════════════
-   CONVERSATIONS
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  CONVERSATIONS
+// ═══════════════════════════════════════════════════════════════════════════
 function newConversation() {
   const id = Date.now().toString();
-  conversations.unshift({ id, title: "Nova conversa", messages: [] });
+  conversations.unshift({ id, title: "Nova conversa", messages: [], summary: null, summaryIndex: 0 });
   saveAll(); setActive(id);
 }
 function setActive(id) { currentId = id; renderSidebar(); renderMessages(); closeSidebar(); }
@@ -1120,36 +803,32 @@ function deleteConv(id, e) {
 }
 function currentConv() { return conversations.find(c => c.id === currentId); }
 
-/* ══════════════════════════════════════════
-   SIDEBAR
-══════════════════════════════════════════ */
 function renderSidebar() {
   const list = document.getElementById("convList");
   list.innerHTML = "";
   conversations.forEach(conv => {
-    const el = document.createElement("div");
+    const el   = document.createElement("div");
     el.className = "conv-item" + (conv.id === currentId ? " active" : "");
-    el.onclick = () => setActive(conv.id);
-    el.innerHTML = `<span>${escHtml(conv.title)}</span>
-      <button class="del" onclick="deleteConv('${conv.id}',event)" title="Excluir">✕</button>`;
+    el.onclick   = () => setActive(conv.id);
+    el.innerHTML = `<span>${escHtml(conv.title)}</span><button class="del" onclick="deleteConv('${conv.id}',event)" title="Excluir">✕</button>`;
     list.appendChild(el);
   });
 }
 
-/* ══════════════════════════════════════════
-   ENGINE LABEL
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  ENGINE LABEL
+// ═══════════════════════════════════════════════════════════════════════════
 function engineLabel(engine, model) {
-  if (engine === "mistral")      return { label: "🌐 " + (model || "Mistral · web search"), cls: "engine-mistral" };
-  if (engine === "huggingface")  return { label: "🤗 " + (model || "HuggingFace"), cls: "engine-huggingface" };
-  if (engine === "cerebras")     return { label: "⚡ " + (model || "Cerebras"), cls: "engine-cerebras" };
-  if (model)                     return { label: model, cls: "" };
+  if (engine === "mistral")     return { label: "🌐 " + (model || "Mistral"), cls: "engine-mistral" };
+  if (engine === "huggingface") return { label: "🤗 " + (model || "HuggingFace"), cls: "engine-huggingface" };
+  if (engine === "cerebras")    return { label: "⚡ " + (model || "Cerebras"), cls: "engine-cerebras" };
+  if (model)                    return { label: model, cls: "" };
   return null;
 }
 
-/* ══════════════════════════════════════════
-   MESSAGES
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  MESSAGES
+// ═══════════════════════════════════════════════════════════════════════════
 function renderMessages() {
   const chat = document.getElementById("chat");
   const conv = currentConv();
@@ -1164,6 +843,12 @@ function renderMessages() {
     </div>`;
     return;
   }
+  if (conv.summary && conv.summaryIndex > 0) {
+    const badge = document.createElement('div');
+    badge.className = 'summary-badge';
+    badge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M9 12h6M9 16h4M7 4H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2M9 4h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> histórico anterior resumido`;
+    chat.appendChild(badge);
+  }
   conv.messages.forEach(m => appendBubble(m.role, m.text, false, m.model, m.engine));
   chat.scrollTop = chat.scrollHeight;
 }
@@ -1171,23 +856,17 @@ function renderMessages() {
 function appendBubble(role, text, animate = true, model = null, engine = null) {
   const chat = document.getElementById("chat");
   document.getElementById("emptyState")?.remove();
-
-  const wrap = document.createElement("div");
+  const wrap   = document.createElement("div");
   wrap.className = "msg-wrap " + role;
   if (!animate) wrap.style.animation = "none";
-
   const eng = (role === "bot") ? engineLabel(engine, model) : null;
-  const modelHtml = eng
-    ? `<span class="msg-model ${eng.cls}">${escHtml(eng.label)}</span>`
-    : "";
-
+  const modelHtml = eng ? `<span class="msg-model ${eng.cls}">${escHtml(eng.label)}</span>` : "";
   wrap.innerHTML = `
     <div class="avatar">${role === "user" ? "EU" : "IA"}</div>
     <div class="msg-content">
       <div class="bubble">${escHtml(text).replace(/\n/g,"<br>")}</div>
       ${modelHtml}
     </div>`;
-
   chat.appendChild(wrap);
   chat.scrollTop = chat.scrollHeight;
   return wrap;
@@ -1199,17 +878,14 @@ function appendThinking() {
   const wrap = document.createElement("div");
   wrap.className = "msg-wrap bot";
   wrap.innerHTML = `<div class="avatar">IA</div>
-    <div class="msg-content">
-      <div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div>
-    </div>`;
-  chat.appendChild(wrap);
-  chat.scrollTop = chat.scrollHeight;
+    <div class="msg-content"><div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div></div>`;
+  chat.appendChild(wrap); chat.scrollTop = chat.scrollHeight;
   return wrap;
 }
 
-/* ══════════════════════════════════════════
-   SEND
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  SEND
+// ═══════════════════════════════════════════════════════════════════════════
 async function send() {
   const input   = document.getElementById("msgInput");
   const message = input.value.trim();
@@ -1219,33 +895,33 @@ async function send() {
   const conv    = currentConv();
   const isFirst = conv.messages.length === 0;
 
+  const engineToSend = selectedEngine;
+  const modelToSend  = selectedModel;
+  const wasWebSearch = webSearchOn;
+
+  const btn    = document.getElementById("sendBtn");
+  btn.disabled = true;
+  input.value  = ""; autoResize();
+
   conv.messages.push({ role: "user", text: message });
   if (isFirst) conv.title = message.slice(0, 36) + (message.length > 36 ? "…" : "");
-  saveAll();
-  appendBubble("user", message);
-  input.value = ""; autoResize(); renderSidebar();
+  saveAll(); appendBubble("user", message); renderSidebar();
 
   sessionMsgs++;
   document.getElementById("ct-msgs").textContent = sessionMsgs;
 
-  const btn      = document.getElementById("sendBtn");
-  btn.disabled   = true;
+  await maybeSummarize(conv);
+  const history = buildHistory(conv);
   const thinking = appendThinking();
-
-  // Capture current selections before any reset
-  const engineToSend    = selectedEngine;
-  const wasWebSearch    = webSearchOn;
 
   try {
     const body = { message };
-    if (engineToSend) body.forceEngine = engineToSend;
+    if (history.length > 0)    body.history     = history;
+    if (engineToSend)          body.forceEngine = engineToSend === 'hf' ? 'huggingface' : engineToSend;
+    if (modelToSend)           body.model       = modelToSend;
     if (wasWebSearch && !engineToSend) body.webSearch = true;
 
-    const res  = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
+    const res  = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     thinking.remove();
 
@@ -1255,7 +931,7 @@ async function send() {
 
     if (model || engine) {
       const eng = engineLabel(engine, model);
-      document.getElementById("modelName").textContent   = eng ? eng.label : (model || "IA");
+      document.getElementById("modelName").textContent = eng ? eng.label : (model || "IA");
       document.getElementById("panel-model").textContent = model || "—";
       document.getElementById("panel-engine").textContent =
         engine === "mistral"     ? "🌐 Mistral · web search" :
@@ -1264,15 +940,14 @@ async function send() {
     }
 
     conv.messages.push({ role: "bot", text: reply, model, engine });
-    saveAll();
-    appendBubble("bot", reply, true, model, engine);
+    saveAll(); appendBubble("bot", reply, true, model, engine);
     if (isFirst) generateTitle(conv, message, reply);
 
-  } catch {
+  } catch (e) {
+    console.error("Send error:", e);
     thinking.remove();
     const err = "❌ Erro ao conectar com a IA.";
-    conv.messages.push({ role: "bot", text: err });
-    saveAll(); appendBubble("bot", err);
+    conv.messages.push({ role: "bot", text: err }); saveAll(); appendBubble("bot", err);
   } finally {
     btn.disabled = false; input.focus();
   }
@@ -1281,25 +956,50 @@ async function send() {
 async function generateTitle(conv, userMsg, botReply) {
   const prompt = `Crie um título curto (máximo 5 palavras, sem aspas, sem ponto final) para esta conversa:\nUsuário: ${userMsg}\nIA: ${botReply}`;
   try {
-    const res  = await fetch(API_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ message: prompt }) });
+    const res  = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: prompt }) });
     const data = await res.json();
     const title = (data.reply || "").trim().slice(0, 50);
     if (title) { conv.title = title; saveAll(); renderSidebar(); }
   } catch { /* mantém título provisório */ }
 }
 
-/* ══════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  MODEL INFO ON LOAD
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadModelInfo() {
+  try {
+    const res  = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "__model_info__" }) });
+    const data = await res.json();
+    document.getElementById("modelName").textContent = "⚡ " + (data.model || "llama3.1-8b");
+    document.getElementById("panel-model").textContent = data.model || "—";
+    document.getElementById("panel-engine").textContent = "⚡ Cerebras · principal";
+
+    if (data.cerebrasModels?.length) CATALOGS.cerebras = data.cerebrasModels;
+    if (data.hfModels?.length)       CATALOGS.hf       = data.hfModels;
+    if (data.mistralModels?.length)  CATALOGS.mistral  = data.mistralModels;
+
+  } catch {
+    document.getElementById("modelName").textContent = "IA conectada";
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════════
 function escHtml(t) {
-  return String(t)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 function autoResize() {
   const ta = document.getElementById("msgInput");
   ta.style.height = "auto";
-  ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
+  const newH = Math.min(ta.scrollHeight, 160);
+  ta.style.height = newH + "px";
+  // Muda borda: arredondada só quando texto cabe em 1 linha (~44px)
+  if (ta.scrollHeight > 52) {
+    ta.classList.add("expanded");
+  } else {
+    ta.classList.remove("expanded");
+  }
 }
 function toggleSidebar() {
   document.getElementById("sidebar").classList.toggle("open");
@@ -1310,9 +1010,6 @@ function closeSidebar() {
   document.getElementById("overlay").classList.remove("open");
 }
 
-/* ══════════════════════════════════════════
-   TAB SWITCHING
-══════════════════════════════════════════ */
 function switchTab(name, btn) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -1321,52 +1018,6 @@ function switchTab(name, btn) {
   if (name === "painel") loadPainel();
 }
 
-function switchITab(name, btn) {
-  const bar = btn.closest('.itab-bar');
-  bar.querySelectorAll('.itab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const section = bar.parentElement;
-  section.querySelectorAll('.itab-panel').forEach(p => p.classList.remove('active'));
-  section.querySelector('#itab-' + name).classList.add('active');
-}
-
-/* ══════════════════════════════════════════
-   COPY CODE
-══════════════════════════════════════════ */
-function copyCode(id) {
-  const el   = document.getElementById(id);
-  const text = el.innerText || el.textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn  = el.closest('.code-block').querySelector('.copy-btn');
-    const orig = btn.textContent;
-    btn.textContent = 'copiado!';
-    setTimeout(() => btn.textContent = orig, 2000);
-  });
-}
-
-/* ══════════════════════════════════════════
-   MODEL INFO ON LOAD
-══════════════════════════════════════════ */
-async function loadModelInfo() {
-  try {
-    const res  = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "__model_info__" })
-    });
-    const data = await res.json();
-    const label = data.model || "llama3.1-8b";
-    document.getElementById("modelName").textContent = "⚡ " + label;
-    document.getElementById("panel-model").textContent = label;
-    document.getElementById("panel-engine").textContent = "⚡ Cerebras · principal";
-  } catch {
-    document.getElementById("modelName").textContent = "IA conectada";
-  }
-}
-
-/* ══════════════════════════════════════════
-   ISOLATED SCROLL
-══════════════════════════════════════════ */
 function initIsolatedScroll() {
   ['convList','chat'].forEach(id => {
     const zone = document.getElementById(id);
@@ -1380,19 +1031,32 @@ function initIsolatedScroll() {
   });
 }
 
-/* ══════════════════════════════════════════
-   INIT
-══════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════════════════
 document.getElementById("msgInput").addEventListener("keydown", e => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
 });
 document.getElementById("msgInput").addEventListener("input", autoResize);
 
-// Default chip state: auto active
-document.getElementById('chip-auto').classList.add('active-auto');
+// Ajusta altura quando teclado virtual abre/fecha no mobile
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => {
+    const pageWrap = document.querySelector(".page-wrap");
+    const vh = window.visualViewport.height - 46; // desconta top-nav
+    pageWrap.style.height = vh + "px";
+  });
+}
+
+selectEngine('auto');
 
 initFirebase();
 loadAll();
+
+conversations = conversations.map(c => ({
+  summary: c.summary ?? null, summaryIndex: c.summaryIndex ?? 0, ...c
+}));
+
 if (conversations.length > 0) currentId = conversations[0].id;
 renderSidebar();
 renderMessages();
