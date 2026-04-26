@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOSAICO — Hub de Notícias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface2: #1e1e1e;
+  --border: #2a2a2a;
+  --text: #f0ede8;
+  --muted: #7a7570;
+  --accent: #e8c547;
+  --g1: #e8001c;
+  --sbt: #1a6fd4;
+  --estadao: #d4d0cb;
+  --band: #f5a623;
+  --radius: 4px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── GRAIN OVERLAY ─────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+/* ── HEADER ────────────────────────────────────── */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(13,13,13,.92);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.logo-word {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text);
+  line-height: 1;
+}
+
+.logo-word span {
+  color: var(--accent);
+}
+
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-left: 1px solid var(--border);
+  padding-left: 10px;
+  line-height: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portal-pills {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.portal-pill {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all .2s;
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--border);
+  font-family: var(--font-body);
+}
+
+.portal-pill:hover { color: var(--text); border-color: #444; }
+.portal-pill.active { color: var(--bg); border-color: transparent; }
+.portal-pill[data-portal="all"].active { background: var(--accent); color: var(--bg); }
+.portal-pill[data-portal="g1"].active { background: var(--g1); }
+.portal-pill[data-portal="sbt"].active { background: var(--sbt); }
+.portal-pill[data-portal="estadao"].active { background: var(--estadao); color: #1a1a1a; }
+.portal-pill[data-portal="band"].active { background: var(--band); color: #1a1a1a; }
+
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .2s;
+  font-family: var(--font-body);
+}
+
+.btn-refresh:hover { background: var(--surface2); border-color: #444; }
+.btn-refresh svg { width: 14px; height: 14px; }
+
+/* ── TICKER ────────────────────────────────────── */
+.ticker-bar {
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  overflow: hidden;
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-label {
+  flex-shrink: 0;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-right: 2px solid rgba(0,0,0,.2);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: rgba(0,0,0,.15);
+}
+
+.ticker-track-wrap { flex: 1; overflow: hidden; }
+
+.ticker-track {
+  display: flex;
+  gap: 48px;
+  animation: ticker 40s linear infinite;
+  white-space: nowrap;
+  padding: 0 24px;
+}
+
+.ticker-track:hover { animation-play-state: paused; }
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.ticker-item { display: inline-flex; align-items: center; gap: 8px; }
+.ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,.4); flex-shrink: 0; }
+
+/* ── MAIN LAYOUT ───────────────────────────────── */
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ── SECTION HEADER ────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.section-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.section-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+/* ── LOADING STATE ─────────────────────────────── */
+#loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 0;
+  gap: 24px;
+}
+
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.loading-portal {
+  height: 4px;
+  border-radius: 2px;
+  animation: loadpulse 1.5s ease-in-out infinite;
+}
+
+.loading-portal:nth-child(1) { background: var(--g1); animation-delay: 0s; }
+.loading-portal:nth-child(2) { background: var(--sbt); animation-delay: .2s; }
+.loading-portal:nth-child(3) { background: var(--estadao); animation-delay: .4s; }
+.loading-portal:nth-child(4) { background: var(--band); animation-delay: .6s; }
+
+@keyframes loadpulse {
+  0%, 100% { opacity: .3; transform: scaleX(.6); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.loading-portal-status {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.portal-loading-card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.portal-loading-name {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.portal-loading-bar {
+  height: 2px;
+  border-radius: 1px;
+  width: 100%;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.portal-loading-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 1px;
+  transition: width 2s ease;
+}
+
+/* ── ERROR STATE ───────────────────────────────── */
+#error-state {
+  display: none;
+  text-align: center;
+  padding: 80px 0;
+}
+
+.error-code {
+  font-family: var(--font-mono);
+  font-size: 64px;
+  font-weight: 500;
+  color: var(--border);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.error-msg {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* ── NEWS CONTENT ──────────────────────────────── */
+#news-content { display: none; }
+
+/* ── FEATURED (top 3 grupos multi-portal) ──────── */
+.featured-section {
+  margin-bottom: 48px;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 2px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.featured-card {
+  background: var(--surface);
+  padding: 32px;
+  cursor: pointer;
+  transition: background .2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.featured-card:hover { background: var(--surface2); }
+
+.featured-card.main { padding: 40px; }
+
+.featured-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.featured-card.portal-g1::before { background: var(--g1); }
+.featured-card.portal-sbt::before { background: var(--sbt); }
+.featured-card.portal-estadao::before { background: var(--estadao); }
+.featured-card.portal-band::before { background: var(--band); }
+.featured-card.portal-multi::before { background: linear-gradient(90deg, var(--g1), var(--sbt), var(--band)); }
+
+.card-categoria {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-categoria::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.card-titulo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.featured-card.main .card-titulo { font-size: 26px; }
+.featured-card:not(.main) .card-titulo { font-size: 17px; }
+
+.card-resumo {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 16px;
+}
+
+.featured-card:not(.main) .card-resumo { display: none; }
+
+.card-portals {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.portal-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+
+.portal-badge.g1 { background: rgba(232,0,28,.15); color: var(--g1); }
+.portal-badge.sbt { background: rgba(26,111,212,.15); color: var(--sbt); }
+.portal-badge.estadao { background: rgba(212,208,203,.15); color: var(--estadao); }
+.portal-badge.band { background: rgba(245,166,35,.15); color: var(--band); }
+
+.card-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .5px;
+}
+
+/* ── ALL NEWS GRID ─────────────────────────────── */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.news-card {
+  background: var(--surface);
+  padding: 24px;
+  cursor: pointer;
+  transition: background .2s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.news-card:hover { background: var(--surface2); }
+
+.news-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.news-card.portal-g1::before { background: var(--g1); }
+.news-card.portal-sbt::before { background: var(--sbt); }
+.news-card.portal-estadao::before { background: var(--estadao); }
+.news-card.portal-band::before { background: var(--band); }
+.news-card.portal-multi::before { background: linear-gradient(90deg, var(--g1), var(--sbt), var(--band)); }
+
+.news-card .card-titulo { font-size: 16px; }
+.news-card .card-resumo { font-size: 13px; flex: 1; }
+
+/* ── MODAL ─────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  z-index: 500;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow-y: auto;
+  backdrop-filter: blur(4px);
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 760px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: modalIn .25s ease;
+  flex-shrink: 0;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 32px 36px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-cat {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.modal-portals { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.modal-body { padding: 24px 36px; }
+
+/* ── AI SUMMARY ────────────────────────────────── */
+.ai-summary-wrap {
+  margin-bottom: 28px;
+}
+
+.ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 3px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all .2s;
+  font-family: var(--font-body);
+  letter-spacing: .5px;
+}
+
+.ai-btn:hover { background: var(--accent); color: var(--bg); }
+.ai-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.ai-btn svg { width: 14px; height: 14px; }
+
+.ai-result {
+  display: none;
+  margin-top: 16px;
+  padding: 20px 24px;
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 3px 3px 0;
+}
+
+.ai-result.visible { display: block; }
+
+.ai-result-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.ai-result-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.ai-loading {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ai-loading.visible { display: flex; }
+
+.ai-dots span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dot-bounce .8s ease-in-out infinite;
+}
+.ai-dots span:nth-child(2) { animation-delay: .15s; }
+.ai-dots span:nth-child(3) { animation-delay: .3s; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── SOURCE ITEMS ──────────────────────────────── */
+.sources-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.source-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.source-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--surface2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.source-header:hover { background: #232323; }
+
+.source-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.source-badge.g1 { background: var(--g1); color: white; }
+.source-badge.sbt { background: var(--sbt); color: white; }
+.source-badge.estadao { background: var(--estadao); color: #1a1a1a; }
+.source-badge.band { background: var(--band); color: #1a1a1a; }
+
+.source-title {
+  font-weight: 500;
+  font-size: 14px;
+  flex: 1;
+}
+
+.source-toggle {
+  font-size: 18px;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+
+.source-body {
+  display: none;
+  padding: 16px 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(240,237,232,.8);
+}
+
+.source-body.open { display: block; }
+
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: .5px;
+}
+
+.source-link:hover { text-decoration: underline; }
+.source-link svg { width: 12px; height: 12px; }
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 18px;
+  transition: all .2s;
+  z-index: 10;
+}
+
+.modal-close:hover { background: var(--border); color: var(--text); }
+
+/* ── FOOTER ────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px;
+  text-align: center;
+}
+
+.footer-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── RESPONSIVE ────────────────────────────────── */
+@media (max-width: 1024px) {
+  .featured-grid { grid-template-columns: 1fr 1fr; }
+  .featured-card:nth-child(3) { display: none; }
+  .news-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .header-inner { height: 56px; }
+  .logo-sub, .portal-pills { display: none; }
+  .featured-grid { grid-template-columns: 1fr; }
+  .featured-card:not(.main) { display: none; }
+  .news-grid { grid-template-columns: 1fr; }
+  main { padding: 24px 16px 60px; }
+  .loading-portal-status { grid-template-columns: repeat(2, 1fr); }
+  .modal-header { padding: 24px 20px 16px; }
+  .modal-body { padding: 16px 20px; }
+  .modal-title { font-size: 22px; }
+}
+
+/* ── FILTER TRANSITION ─────────────────────────── */
+.news-card, .featured-card {
+  transition: background .2s, opacity .3s, transform .3s;
+}
+
+.news-card.hidden, .featured-card.hidden {
+  display: none;
+}
+
+/* ── SCROLL ANIMATION ──────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.news-card, .featured-card {
+  animation: fadeUp .4s ease both;
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-word">MO<span>S</span>AICO</span>
+      <span class="logo-sub">Hub de Notícias</span>
+    </div>
+    <div class="header-actions">
+      <div class="portal-pills">
+        <button class="portal-pill active" data-portal="all">Todos</button>
+        <button class="portal-pill" data-portal="g1">G1</button>
+        <button class="portal-pill" data-portal="sbt">SBT</button>
+        <button class="portal-pill" data-portal="estadao">Estadão</button>
+        <button class="portal-pill" data-portal="band">Band</button>
+      </div>
+      <button class="btn-refresh" onclick="loadNews()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 4v6h6M23 20v-6h-6"/>
+          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+        </svg>
+        Atualizar
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- TICKER -->
+<div class="ticker-bar" id="ticker-bar" style="display:none">
+  <span class="ticker-label">AO VIVO</span>
+  <div class="ticker-track-wrap">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <!-- LOADING -->
+  <div id="loading-state">
+    <div class="loading-grid">
+      <div class="loading-portal"></div>
+      <div class="loading-portal"></div>
+      <div class="loading-portal"></div>
+      <div class="loading-portal"></div>
+    </div>
+    <p class="loading-text" id="loading-text">Conectando aos portais...</p>
+    <div class="loading-portal-status">
+      <div class="portal-loading-card">
+        <div class="portal-loading-name" style="color:var(--g1)">G1</div>
+        <div class="portal-loading-bar"><div class="portal-loading-fill" id="fill-g1" style="background:var(--g1)"></div></div>
+      </div>
+      <div class="portal-loading-card">
+        <div class="portal-loading-name" style="color:var(--sbt)">SBT</div>
+        <div class="portal-loading-bar"><div class="portal-loading-fill" id="fill-sbt" style="background:var(--sbt)"></div></div>
+      </div>
+      <div class="portal-loading-card">
+        <div class="portal-loading-name" style="color:var(--estadao)">Estadão</div>
+        <div class="portal-loading-bar"><div class="portal-loading-fill" id="fill-estadao" style="background:var(--estadao)"></div></div>
+      </div>
+      <div class="portal-loading-card">
+        <div class="portal-loading-name" style="color:var(--band)">Band</div>
+        <div class="portal-loading-bar"><div class="portal-loading-fill" id="fill-band" style="background:var(--band)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-state">
+    <span class="error-code">503</span>
+    <p class="error-msg">Não foi possível carregar as notícias. Verifique a conexão e tente novamente.</p>
+    <button class="btn-refresh" onclick="loadNews()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+        <path d="M1 4v6h6M23 20v-6h-6"/>
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+      </svg>
+      Tentar novamente
+    </button>
+  </div>
+
+  <!-- NEWS -->
+  <div id="news-content">
+    <!-- Featured -->
+    <section class="featured-section">
+      <div class="section-header">
+        <span class="section-title">Destaques</span>
+        <span class="section-count" id="featured-count"></span>
+        <span class="section-time" id="fetch-time"></span>
+      </div>
+      <div class="featured-grid" id="featured-grid"></div>
+    </section>
+
+    <!-- All News -->
+    <section>
+      <div class="section-header">
+        <span class="section-title">Todas as Notícias</span>
+        <span class="section-count" id="all-count"></span>
+      </div>
+      <div class="news-grid" id="news-grid"></div>
+    </section>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p class="footer-text">MOSAICO · Agrega G1 · SBT · Estadão · Band · Resumos por IA</p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModalDirect()">×</button>
+    <div class="modal-header">
+      <div class="modal-cat" id="modal-cat"></div>
+      <h2 class="modal-title" id="modal-title"></h2>
+      <div class="modal-portals" id="modal-portals"></div>
+    </div>
+    <div class="modal-body">
+      <!-- AI Summary -->
+      <div class="ai-summary-wrap">
+        <button class="ai-btn" id="ai-btn" onclick="requestSummary()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4m0-4h.01"/>
+          </svg>
+          Resumo por IA
+        </button>
+        <div class="ai-loading" id="ai-loading">
+          <div class="ai-dots"><span></span><span></span><span></span></div>
+          Gerando resumo...
+        </div>
+        <div class="ai-result" id="ai-result">
+          <div class="ai-result-label">Resumo · IA</div>
+          <p class="ai-result-text" id="ai-result-text"></p>
+        </div>
+      </div>
+
+      <!-- Sources -->
+      <div class="sources-title">Cobertura dos portais</div>
+      <div id="modal-sources"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_NEWS  = 'https://mesinhasserver/api/news';
+const API_CHAT  = 'https://mesinhasserver/api/chat';
+
+let allGroups   = [];
+let allNews     = [];
+let currentFilter = 'all';
+let currentGroup  = null;
+
+// ── LOAD NEWS ───────────────────────────────────────────────────────────────
+async function loadNews() {
+  showLoading();
+  animateLoadBars();
+
+  try {
+    const res = await fetch(API_NEWS);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.groups || data.groups.length === 0) throw new Error('no data');
+
+    allGroups = data.groups;
+    allNews   = data.allNews;
+
+    renderTicker(allNews);
+    renderFeatured(allGroups);
+    renderGrid(allGroups);
+    updateFetchTime(data.fetchedAt);
+
+    showContent();
+  } catch (e) {
+    console.error('loadNews error:', e);
+    showError();
+  }
+}
+
+function animateLoadBars() {
+  const portals = ['g1','sbt','estadao','band'];
+  portals.forEach((p, i) => {
+    setTimeout(() => {
+      const el = document.getElementById('fill-' + p);
+      if (el) el.style.width = '100%';
+    }, i * 600);
+  });
+  const texts = ['Conectando aos portais...','Buscando G1...','Buscando SBT...','Buscando Estadão...','Buscando Band...','Agrupando por tema...'];
+  let t = 0;
+  const iv = setInterval(() => {
+    const el = document.getElementById('loading-text');
+    if (el && t < texts.length) el.textContent = texts[t++];
+    else clearInterval(iv);
+  }, 2500);
+}
+
+// ── TICKER ──────────────────────────────────────────────────────────────────
+function renderTicker(news) {
+  const track = document.getElementById('ticker-track');
+  const bar   = document.getElementById('ticker-bar');
+  if (!track || !bar || !news.length) return;
+
+  const items = [...news, ...news]; // duplicate for seamless loop
+  track.innerHTML = items.map(n =>
+    `<span class="ticker-item"><span class="ticker-dot"></span>${n.portal.toUpperCase()} · ${n.titulo}</span>`
+  ).join('');
+
+  bar.style.display = 'flex';
+}
+
+// ── FEATURED ─────────────────────────────────────────────────────────────────
+function renderFeatured(groups) {
+  const grid = document.getElementById('featured-grid');
+  const top  = groups.slice(0, 3);
+
+  document.getElementById('featured-count').textContent = `${top.length} grupos`;
+
+  grid.innerHTML = top.map((g, i) => {
+    const main   = g.items[0];
+    const portals = [...new Set(g.items.map(x => x.portalId))];
+    const isMulti = portals.length > 1;
+    const cls = isMulti ? 'portal-multi' : `portal-${main.portalId}`;
+
+    return `<div class="featured-card ${i === 0 ? 'main' : ''} ${cls}"
+              data-group-id="${g.id}"
+              onclick="openModal('${g.id}')"
+              style="animation-delay:${i * 0.08}s">
+      <div class="card-categoria">${main.categoria || 'Notícia'}</div>
+      <h2 class="card-titulo">${escHtml(main.titulo)}</h2>
+      ${i === 0 ? `<p class="card-resumo">${escHtml(main.resumo || '')}</p>` : ''}
+      <div class="card-portals">${portals.map(p => `<span class="portal-badge ${p}">${p.toUpperCase()}</span>`).join('')}</div>
+      <div class="card-meta">${main.hora || ''} ${isMulti ? '· ' + portals.length + ' portais' : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── NEWS GRID ────────────────────────────────────────────────────────────────
+function renderGrid(groups) {
+  const grid = document.getElementById('news-grid');
+  const rest = groups.slice(3);
+
+  document.getElementById('all-count').textContent = `${groups.length} assuntos`;
+
+  grid.innerHTML = groups.map((g, i) => {
+    const main   = g.items[0];
+    const portals = [...new Set(g.items.map(x => x.portalId))];
+    const isMulti = portals.length > 1;
+    const cls = isMulti ? 'portal-multi' : `portal-${main.portalId}`;
+
+    return `<div class="news-card ${cls}" data-portals="${portals.join(',')}" data-group-id="${g.id}"
+              onclick="openModal('${g.id}')" style="animation-delay:${Math.min(i*0.04, 0.5)}s">
+      <div class="card-categoria">${main.categoria || 'Notícia'}</div>
+      <h3 class="card-titulo">${escHtml(main.titulo)}</h3>
+      <p class="card-resumo">${escHtml((main.resumo || '').slice(0, 120))}...</p>
+      <div style="margin-top:auto;padding-top:12px">
+        <div class="card-portals">${portals.map(p => `<span class="portal-badge ${p}">${p.toUpperCase()}</span>`).join('')}</div>
+        <div class="card-meta">${main.hora || ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(groupId) {
+  const group = allGroups.find(g => g.id === groupId);
+  if (!group) return;
+  currentGroup = group;
+
+  const main = group.items[0];
+  const portals = [...new Set(group.items.map(x => x.portalId))];
+
+  document.getElementById('modal-cat').textContent = main.categoria || 'Notícia';
+  document.getElementById('modal-title').textContent = main.titulo;
+  document.getElementById('modal-portals').innerHTML = portals.map(p =>
+    `<span class="portal-badge ${p}">${p.toUpperCase()}</span>`
+  ).join('');
+
+  // Reset AI
+  document.getElementById('ai-btn').disabled = false;
+  document.getElementById('ai-btn').style.display = '';
+  document.getElementById('ai-loading').classList.remove('visible');
+  document.getElementById('ai-result').classList.remove('visible');
+
+  // Sources
+  document.getElementById('modal-sources').innerHTML = group.items.map((item, idx) =>
+    `<div class="source-item">
+      <div class="source-header" onclick="toggleSource(${idx})">
+        <span class="source-badge ${item.portalId}">${item.portal}</span>
+        <span class="source-title">${escHtml(item.titulo)}</span>
+        <span class="source-toggle" id="stoggle-${idx}">+</span>
+      </div>
+      <div class="source-body" id="sbody-${idx}">
+        <p>${escHtml(item.resumo || '')}</p>
+        <a href="${item.link}" target="_blank" rel="noopener" class="source-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+          </svg>
+          Ver matéria completa em ${item.portal}
+        </a>
+      </div>
+    </div>`
+  ).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleSource(idx) {
+  const body   = document.getElementById(`sbody-${idx}`);
+  const toggle = document.getElementById(`stoggle-${idx}`);
+  const open   = body.classList.toggle('open');
+  toggle.textContent = open ? '−' : '+';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  currentGroup = null;
+}
+
+// ── AI SUMMARY ───────────────────────────────────────────────────────────────
+async function requestSummary() {
+  if (!currentGroup) return;
+
+  const btn     = document.getElementById('ai-btn');
+  const loading = document.getElementById('ai-loading');
+  const result  = document.getElementById('ai-result');
+  const text    = document.getElementById('ai-result-text');
+
+  btn.disabled = true;
+  btn.style.display = 'none';
+  loading.classList.add('visible');
+  result.classList.remove('visible');
+
+  const context = currentGroup.items.map(item =>
+    `[${item.portal}] ${item.titulo}\n${item.resumo || ''}`
+  ).join('\n\n');
+
+  const prompt = `Analise estas notícias sobre o mesmo assunto de diferentes portais brasileiros e faça um resumo objetivo e completo em 3-4 parágrafos. Destaque os pontos em comum e eventuais diferenças na cobertura.
+
+${context}
+
+Responda apenas com o resumo, sem títulos ou marcações.`;
+
+  try {
+    const res = await fetch(API_CHAT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: prompt,
+        forceEngine: 'cerebras',
+      })
+    });
+    const data = await res.json();
+    const reply = data.reply || 'Não foi possível gerar o resumo.';
+
+    text.textContent = reply;
+    loading.classList.remove('visible');
+    result.classList.add('visible');
+  } catch (e) {
+    text.textContent = 'Erro ao gerar resumo. Tente novamente.';
+    loading.classList.remove('visible');
+    result.classList.add('visible');
+    btn.style.display = '';
+    btn.disabled = false;
+  }
+}
+
+// ── FILTER ───────────────────────────────────────────────────────────────────
+function filterByPortal(portal) {
+  currentFilter = portal;
+  document.querySelectorAll('.portal-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.portal === portal);
+  });
+
+  document.querySelectorAll('.news-card').forEach(card => {
+    if (portal === 'all') {
+      card.classList.remove('hidden');
+    } else {
+      const portals = (card.dataset.portals || '').split(',');
+      card.classList.toggle('hidden', !portals.includes(portal));
+    }
+  });
+
+  document.querySelectorAll('.featured-card').forEach(card => {
+    if (portal === 'all') {
+      card.classList.remove('hidden');
+      return;
+    }
+    const gid = card.dataset.groupId;
+    const group = allGroups.find(g => g.id === gid);
+    if (!group) return;
+    const portals = group.items.map(i => i.portalId);
+    card.classList.toggle('hidden', !portals.includes(portal));
+  });
+}
+
+document.querySelectorAll('.portal-pill').forEach(btn => {
+  btn.addEventListener('click', () => filterByPortal(btn.dataset.portal));
+});
+
+// ── STATE HELPERS ─────────────────────────────────────────────────────────────
+function showLoading() {
+  document.getElementById('loading-state').style.display = 'flex';
+  document.getElementById('error-state').style.display   = 'none';
+  document.getElementById('news-content').style.display  = 'none';
+  document.getElementById('ticker-bar').style.display    = 'none';
+  // Reset bars
+  ['g1','sbt','estadao','band'].forEach(p => {
+    const el = document.getElementById('fill-' + p);
+    if (el) { el.style.transition = 'none'; el.style.width = '0%'; setTimeout(() => el.style.transition = 'width 2s ease', 50); }
+  });
+}
+
+function showContent() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display   = 'none';
+  document.getElementById('news-content').style.display  = 'block';
+}
+
+function showError() {
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('error-state').style.display   = 'block';
+  document.getElementById('news-content').style.display  = 'none';
+}
+
+function updateFetchTime(iso) {
+  const el = document.getElementById('fetch-time');
+  if (!el || !iso) return;
+  const d = new Date(iso);
+  el.textContent = 'Atualizado às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ESC para fechar modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadNews();
+</script>
+</body>
+</html>
