@@ -1,57 +1,74 @@
 const CACHE_KEY = "caos_cache";
+const STATUS_KEY = "caos_status";
 const TTL = 1000 * 60 * 60;
-const API_URL = "https://mesinhasserver.vercel.app/api/caos-key";
 
-// sua função (mantida como você mandou)
-async function verificarServidor(api) {
+const API_URL = "https://mesinhasserver.vercel.app/api/caos";
+
+async function verificarServidor(url) {
     try {
-        const response = await fetch(api + "/health");
+        const res = await fetch(url + "/health", {
+            cache: "no-store"
+        });
 
-        if (response.ok) {
-            const data = await response.json();
+        if (!res.ok) return false;
 
-            if (data.status === "ok") {
-                console.log("Servidor ONLINE");
-                return true;
-            }
-        }
+        const data = await res.json();
+        return data?.status === "ok";
 
-        console.log("Servidor OFFLINE");
-        return false;
-
-    } catch (error) {
-        console.log("Servidor OFFLINE");
+    } catch {
         return false;
     }
 }
 
-async function getCaosUrl() {
+function setStatus(status) {
+    localStorage.setItem(STATUS_KEY, JSON.stringify({
+        status,
+        last_check: Date.now()
+    }));
+}
+
+function getStatus() {
+    return JSON.parse(localStorage.getItem(STATUS_KEY));
+}
+
+export async function getCaosUrl() {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
     const now = Date.now();
 
-    // 1. ainda dentro de 1h → usa cache direto
+    let shouldRevalidate = false;
+
     if (cached?.data?.last_update) {
         const last = new Date(cached.data.last_update).getTime();
 
         if (now - last < TTL) {
             return cached.data.url;
         }
+
+        shouldRevalidate = true;
     }
 
-    // 2. passou 1h → testa API salva
-    if (cached?.data?.url) {
-        const online = await verificarServidor(cached.data.url);
+    if (shouldRevalidate && cached?.data?.url) {
+        const ok = await verificarServidor(cached.data.url);
 
-        if (online) {
-            console.log("Usando API existente");
+        if (ok) {
+            setStatus("on");
             return cached.data.url;
         }
+
+        setStatus("off");
     }
 
-    // 3. fallback → busca nova URL no Firebase via Vercel
     try {
-        const res = await fetch(API_URL);
+        const res = await fetch(API_URL + "?mode=force", {
+            cache: "no-store"
+        });
+
         const json = await res.json();
+
+        if (!json?.data?.url) {
+            setStatus("off");
+            return cached?.data?.url || null;
+        }
 
         const data = json.data;
 
@@ -64,14 +81,31 @@ async function getCaosUrl() {
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(newCache));
 
+        const ok = await verificarServidor(data.url);
+
+        if (ok) {
+            setStatus("on");
+        } else {
+            setStatus("off");
+        }
+
         return data.url;
 
     } catch (err) {
-        console.error("Erro ao atualizar API:", err);
-
-        // fallback final
-        return cached?.data?.url || null;
+        console.error("Erro ao buscar nova URL:", err);
+        setStatus("off");
     }
+
+    setStatus("off");
+    return cached?.data?.url || null;
 }
 
-console.log(getCaosUrl())
+setInterval(async () => {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+
+    if (cached?.data?.url) {
+        const ok = await verificarServidor(cached.data.url);
+
+        setStatus(ok ? "on" : "off");
+    }
+}, TTL);
