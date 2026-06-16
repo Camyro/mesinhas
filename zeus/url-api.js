@@ -100,6 +100,8 @@ export async function getCaosUrl() {
     return cached?.data?.url || null;
 }
 
+getStatus()
+
 setInterval(async () => {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
 
