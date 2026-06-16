@@ -1,6 +1,6 @@
 const CACHE_KEY = "caos_cache";
 const TTL = 1000 * 60 * 60;
-const API_URL = "https://mesinhasserver.vercel.app/api/caos";
+const API_URL = "https://mesinhasserver.vercel.app/api/caos-key";
 
 // sua função (mantida como você mandou)
 async function verificarServidor(api) {
