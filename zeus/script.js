@@ -1,6 +1,6 @@
 let fazendo = false;
 let response_text = document.getElementById("resp");
-let cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+let cached = JSON.parse(localStorage.getItem("caos_cache"));
 
 async function chamarCaos(prompt, models, temperature, api_key, api) {
 
@@ -91,8 +91,9 @@ async function verificarServidor(api) {
 }
 
 async function response() {
-    cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    cached = JSON.parse(localStorage.getItem("caos_cache"));
     const prompt_text = document.getElementById("imput-chat").value;
+    console.log(cached)
 
     console.log(prompt_text)
     response_text.textContent = "Iniciando";
